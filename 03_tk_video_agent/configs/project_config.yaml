@@ -1,0 +1,8 @@
+﻿project:
+  name: agent-video-lab
+  stage: scaffold
+  language: zh-CN
+
+paths:
+  timeline_json: outputs/timelines/timeline.json
+  capcut_timeline_csv: outputs/timelines/capcut_timeline.csv

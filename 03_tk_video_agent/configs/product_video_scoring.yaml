@@ -1,0 +1,11 @@
+﻿scoring:
+  dimensions:
+    - hook_strength
+    - product_clarity
+    - pain_point_match
+    - proof_or_demo
+    - pacing
+    - visual_quality
+  scale:
+    min: 1
+    max: 5

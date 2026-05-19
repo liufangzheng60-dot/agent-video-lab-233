@@ -1,0 +1,4 @@
+﻿# First-stage dependencies only.
+# Do not install automatically during workspace initialization.
+pytest
+PyYAML

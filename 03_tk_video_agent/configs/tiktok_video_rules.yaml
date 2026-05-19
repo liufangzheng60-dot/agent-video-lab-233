@@ -1,0 +1,10 @@
+﻿video_rules:
+  platform: TikTok
+  stage: first_mvp
+  target_duration_seconds:
+    min: 15
+    max: 45
+  notes:
+    - Hook should appear early.
+    - Product benefit should be visible.
+    - Manual review is required before publishing.

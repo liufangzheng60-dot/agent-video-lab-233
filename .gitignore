@@ -1,0 +1,56 @@
+﻿# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+*.env.local
+
+# OS and editor files
+.DS_Store
+Thumbs.db
+.vscode/
+
+# Reference repositories are read-only external sources.
+00_references/*
+!00_references/.gitkeep
+
+# Large or generated media assets
+*.mp4
+*.mov
+*.mkv
+*.avi
+*.webm
+*.mp3
+*.wav
+*.m4a
+*.aac
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+
+# Keep scaffold directories while ignoring generated runtime contents.
+03_tk_video_agent/inputs/**
+!03_tk_video_agent/inputs/**/
+!03_tk_video_agent/inputs/**/.gitkeep
+03_tk_video_agent/outputs/**
+!03_tk_video_agent/outputs/**/
+!03_tk_video_agent/outputs/**/.gitkeep
+04_test_cases/**/source_materials/**
+!04_test_cases/**/source_materials/**/
+!04_test_cases/**/source_materials/**/.gitkeep
+05_final_outputs/**
+!05_final_outputs/**/
+!05_final_outputs/**/.gitkeep
