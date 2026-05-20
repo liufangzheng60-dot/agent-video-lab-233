@@ -197,3 +197,15 @@ Iteration rules:
 - Poor completion -> shorten pacing.
 - Comments ask product function -> strengthen demo and proof.
 - Low views but good engagement -> keep structure and replace material.
+
+## video_v001 Manual Publish Pack
+
+Prepared files:
+
+```text
+../05_final_outputs/publish_records/video_v001_publish_pack.md
+../05_final_outputs/publish_records/video_v001_caption_options.md
+../05_final_outputs/performance_feedback/video_v001_feedback.md
+```
+
+Use the publish pack to manually post `outputs/renders/final_subtitled.mp4` to TikTok Shop US. No automatic publishing, external API call, video modification, or re-rendering is performed by this project step.
