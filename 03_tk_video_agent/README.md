@@ -149,3 +149,30 @@ outputs/renders/final.mp4
 ```
 
 请人工打开 `final.mp4`，检查播放、竖屏比例、画面变形、主体清晰度、节奏和 TikTok 商品视频观感，并把结论写入 `manual_review.md`。本步骤不重新渲染，不调用 ffmpeg。
+
+## 字幕烧录
+
+运行：
+
+```bash
+python main.py subtitles
+```
+
+默认输入：
+
+- `outputs/renders/final.mp4`
+- `outputs/timelines/timeline.json`
+- `outputs/edit_strategy/edit_strategy.json`
+- `inputs/product_briefs/`
+
+默认输出：
+
+- `outputs/subtitles/subtitles.srt`
+- `outputs/subtitles/subtitle_plan.md`
+- `outputs/renders/final_subtitled.mp4`
+
+第一版从 timeline 的时间和 caption 生成英文短字幕，并使用本机 `ffmpeg` 烧录到现有 `final.mp4`。不做 AI 视觉理解、视频转录、外部 API 调用或自动发布。
+
+English-only subtitle rule:
+
+`python main.py subtitles` always writes English-only subtitles to `outputs/subtitles/subtitles.srt` and burns those English subtitles into `outputs/renders/final_subtitled.mp4`. Chinese source captions or product brief text are not copied into the SRT; fixed English fallback templates are used when needed. No translation API is called.

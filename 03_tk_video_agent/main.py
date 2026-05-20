@@ -10,6 +10,7 @@ from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
 from helpers.inventory import run_inventory
 from helpers.render import run_render
+from helpers.subtitle_overlay import run_subtitles
 
 
 def main() -> None:
@@ -20,6 +21,7 @@ def main() -> None:
     subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
     subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
+    subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -62,6 +64,16 @@ def main() -> None:
         print(f"Render status: {report['status']}")
         print(f"Final: {result['final_path']}")
         print(f"Report: {result['report_path']}")
+        print(report["message"])
+        return
+
+    if args.command == "subtitles":
+        result = run_subtitles(project_root)
+        report = result["report"]
+        print(f"Subtitle status: {report['status']}")
+        print(f"SRT: {result['srt_path']}")
+        print(f"Plan: {result['plan_path']}")
+        print(f"Video: {result['subtitled_path']}")
         print(report["message"])
         return
 
