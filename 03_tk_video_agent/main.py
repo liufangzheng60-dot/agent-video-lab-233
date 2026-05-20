@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from helpers.build_material_pack import run_material_pack
+from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.inventory import run_inventory
 
 
@@ -14,6 +15,7 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command")
     subparsers.add_parser("inventory", help="Scan local input materials and write inventory reports.")
     subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
+    subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -30,6 +32,14 @@ def main() -> None:
         result = run_material_pack(project_root)
         material_pack = result["material_pack"]
         print(f"Material pack generated: {material_pack['material_count']} materials")
+        print(f"JSON: {result['json_path']}")
+        print(f"Markdown: {result['markdown_path']}")
+        return
+
+    if args.command == "edit-strategy":
+        result = run_edit_strategy(project_root)
+        edit_strategy = result["edit_strategy"]
+        print(f"Edit strategy generated: {len(edit_strategy['strategy_segments'])} segments")
         print(f"JSON: {result['json_path']}")
         print(f"Markdown: {result['markdown_path']}")
         return
