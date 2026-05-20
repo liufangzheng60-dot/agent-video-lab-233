@@ -51,3 +51,24 @@ python main.py inventory
 - `outputs/material_inventory/material_inventory.md`
 
 第一版只做本地文件盘点。`ffprobe` 如果可用，会补充媒体时长、分辨率和音轨信息；如果不可用，程序不会中断，会在风险提示中记录 `ffprobe_unavailable`。
+
+## 素材包生成
+
+运行：
+
+```bash
+python main.py material-pack
+```
+
+默认输入：
+
+- `outputs/material_inventory/material_inventory.json`
+- `inputs/product_briefs/*.txt`
+- `inputs/product_briefs/*.md`
+
+默认输出：
+
+- `outputs/material_pack/material_pack.json`
+- `outputs/material_pack/material_pack.md`
+
+第一版只做本地素材包整理：读取素材盘点和产品 brief，为素材分配 `suggested_role`，并添加基础风险提示。不做 AI 视觉理解、转录、剪辑、渲染或外部 API 调用。
