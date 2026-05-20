@@ -7,6 +7,7 @@ from pathlib import Path
 
 from helpers.build_material_pack import run_material_pack
 from helpers.generate_edit_strategy import run_edit_strategy
+from helpers.generate_timeline import run_timeline
 from helpers.inventory import run_inventory
 
 
@@ -16,6 +17,7 @@ def main() -> None:
     subparsers.add_parser("inventory", help="Scan local input materials and write inventory reports.")
     subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
     subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
+    subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -42,6 +44,14 @@ def main() -> None:
         print(f"Edit strategy generated: {len(edit_strategy['strategy_segments'])} segments")
         print(f"JSON: {result['json_path']}")
         print(f"Markdown: {result['markdown_path']}")
+        return
+
+    if args.command == "timeline":
+        result = run_timeline(project_root)
+        timeline = result["timeline"]
+        print(f"Timeline generated: {len(timeline['segments'])} segments, {timeline['target_duration_seconds']} seconds")
+        print(f"JSON: {result['json_path']}")
+        print(f"CSV: {result['csv_path']}")
         return
 
     parser.print_help()

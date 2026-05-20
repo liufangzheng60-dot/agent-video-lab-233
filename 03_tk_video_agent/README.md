@@ -92,3 +92,23 @@ python main.py edit-strategy
 - `outputs/edit_strategy/edit_strategy.md`
 
 第一版只生成 TikTok 商品短视频剪辑策略，目标时长 7-15 秒，结构为 `hook -> problem -> demo -> proof -> cta`。它会使用素材包中的 `suggested_role`，并把非 9:16 视频风险传递到策略中。本阶段不做 AI 视觉理解、转录、剪辑、渲染或外部 API 调用。
+
+## 时间轴生成
+
+运行：
+
+```bash
+python main.py timeline
+```
+
+默认输入：
+
+- `outputs/edit_strategy/edit_strategy.json`
+- `outputs/material_pack/material_pack.json`
+
+默认输出：
+
+- `outputs/timelines/timeline.json`
+- `outputs/timelines/capcut_timeline.csv`
+
+第一版只生成可执行规划时间轴和 CapCut 人工复刻 CSV。它不会调用 ffmpeg，不会剪辑，不会渲染，也不会生成 `final.mp4`。
