@@ -28,3 +28,26 @@ TikTok 商品视频剪辑 Agent 的主开发区。
 - `helpers/`：Python 辅助脚本。
 - `tests/`：pytest 测试。
 - `tasks/`：阶段任务说明。
+
+## 本地素材盘点
+
+运行：
+
+```bash
+python main.py inventory
+```
+
+默认扫描：
+
+- `inputs/product_images/`
+- `inputs/raw_videos/`
+- `inputs/ai_generated_clips/`
+- `inputs/product_briefs/`
+- `inputs/reference_videos/`
+
+默认输出：
+
+- `outputs/material_inventory/material_inventory.json`
+- `outputs/material_inventory/material_inventory.md`
+
+第一版只做本地文件盘点。`ffprobe` 如果可用，会补充媒体时长、分辨率和音轨信息；如果不可用，程序不会中断，会在风险提示中记录 `ffprobe_unavailable`。

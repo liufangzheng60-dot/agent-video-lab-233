@@ -31,3 +31,19 @@
 ## 当前状态
 
 仅定义任务，不实现业务逻辑。
+
+## 实现状态
+
+第一版已实现本地素材盘点命令：
+
+```bash
+python main.py inventory
+```
+
+实现边界：
+
+- 只扫描 `03_tk_video_agent/inputs/` 下的五个默认素材桶。
+- 输出 JSON 和 Markdown 两份报告。
+- 使用 Python 标准库。
+- `ffprobe` 仅作为可选增强能力。
+- 不做 AI 视觉理解、转录、剪辑或渲染。
