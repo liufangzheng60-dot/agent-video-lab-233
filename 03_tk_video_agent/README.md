@@ -112,3 +112,40 @@ python main.py timeline
 - `outputs/timelines/capcut_timeline.csv`
 
 第一版只生成可执行规划时间轴和 CapCut 人工复刻 CSV。它不会调用 ffmpeg，不会剪辑，不会渲染，也不会生成 `final.mp4`。
+
+## 最小渲染
+
+运行：
+
+```bash
+python main.py render
+```
+
+默认输入：
+
+- `outputs/timelines/timeline.json`
+- `outputs/material_pack/material_pack.json`
+- `inputs/raw_videos/`
+
+默认输出：
+
+- `outputs/renders/final.mp4`
+- `outputs/renders/render_report.md`
+
+第一版使用本机 PATH 中的 `ffmpeg`，把 timeline 引用的 mp4 素材生成一个 9:16 可审片视频。当前采用 scale + pad 输出 720x1280，并记录非 9:16 风险。不做 AI 视觉理解、转录、自动发布或 UI。
+
+## 人工审片
+
+审片文件：
+
+```text
+outputs/reports/manual_review.md
+```
+
+当前审片对象：
+
+```text
+outputs/renders/final.mp4
+```
+
+请人工打开 `final.mp4`，检查播放、竖屏比例、画面变形、主体清晰度、节奏和 TikTok 商品视频观感，并把结论写入 `manual_review.md`。本步骤不重新渲染，不调用 ffmpeg。

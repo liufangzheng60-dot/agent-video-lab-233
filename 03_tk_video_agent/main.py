@@ -9,6 +9,7 @@ from helpers.build_material_pack import run_material_pack
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
 from helpers.inventory import run_inventory
+from helpers.render import run_render
 
 
 def main() -> None:
@@ -18,6 +19,7 @@ def main() -> None:
     subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
     subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
+    subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -52,6 +54,15 @@ def main() -> None:
         print(f"Timeline generated: {len(timeline['segments'])} segments, {timeline['target_duration_seconds']} seconds")
         print(f"JSON: {result['json_path']}")
         print(f"CSV: {result['csv_path']}")
+        return
+
+    if args.command == "render":
+        result = run_render(project_root)
+        report = result["report"]
+        print(f"Render status: {report['status']}")
+        print(f"Final: {result['final_path']}")
+        print(f"Report: {result['report_path']}")
+        print(report["message"])
         return
 
     parser.print_help()
