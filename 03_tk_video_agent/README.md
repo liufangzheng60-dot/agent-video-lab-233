@@ -176,3 +176,24 @@ python main.py subtitles
 English-only subtitle rule:
 
 `python main.py subtitles` always writes English-only subtitles to `outputs/subtitles/subtitles.srt` and burns those English subtitles into `outputs/renders/final_subtitled.mp4`. Chinese source captions or product brief text are not copied into the SRT; fixed English fallback templates are used when needed. No translation API is called.
+
+## Manual Publish Record And Feedback Loop
+
+P1 starts with manual publishing records, not automatic publishing.
+
+Templates:
+
+```text
+../05_final_outputs/publish_records/video_v001_publish_record.md
+../05_final_outputs/performance_feedback/video_v001_feedback.md
+```
+
+Use `video_v001_publish_record.md` before posting to confirm the asset, caption, hashtags, product attachment, and manual publish URL. Use `video_v001_feedback.md` after posting to record 1h, 3h, 24h, and 48h performance data, then decide the smallest next iteration.
+
+Iteration rules:
+
+- Poor 3-second retention -> improve Hook.
+- Poor product clicks -> improve subtitles and CTA.
+- Poor completion -> shorten pacing.
+- Comments ask product function -> strengthen demo and proof.
+- Low views but good engagement -> keep structure and replace material.
