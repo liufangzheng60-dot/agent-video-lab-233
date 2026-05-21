@@ -227,3 +227,18 @@ This generates five TikTok Shop US test variants from the existing `final.mp4`:
 - v006 fast demo hook
 
 Outputs include five subtitle-burned mp4 files, SRT files under `outputs/subtitles/batch_variants/`, and manual publish/feedback templates under `../05_final_outputs/`. No automatic TikTok publishing or external API calls are performed.
+
+## Date Naming Rule For Batch Outputs
+
+Future generated batch outputs must include a concrete `YYYYMMDD` date stamp in filenames:
+
+- `final_v002_cost_hook_YYYYMMDD.mp4`
+- `final_v003_stress_hook_YYYYMMDD.mp4`
+- `final_v004_led_safety_hook_YYYYMMDD.mp4`
+- `final_v005_home_grooming_hook_YYYYMMDD.mp4`
+- `final_v006_fast_demo_hook_YYYYMMDD.mp4`
+- `batch_v002_to_v006_publish_plan_YYYYMMDD.md`
+- `batch_v002_to_v006_feedback_YYYYMMDD.md`
+- `batch_v002_to_v006_qc_review_YYYYMMDD.md`
+
+This makes publishing, feedback, and audit records easier to connect to the exact batch date.

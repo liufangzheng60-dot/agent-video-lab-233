@@ -36,3 +36,16 @@ python main.py batch-variants
 - Does not call external APIs.
 - Does not install dependencies.
 - Does not do AI visual understanding or transcription.
+
+## Date Naming Rule
+
+Future batch generation must include a `YYYYMMDD` date stamp in generated video, publish plan, feedback, and QC filenames.
+
+Examples:
+
+- `final_v002_cost_hook_YYYYMMDD.mp4`
+- `batch_v002_to_v006_publish_plan_YYYYMMDD.md`
+- `batch_v002_to_v006_feedback_YYYYMMDD.md`
+- `batch_v002_to_v006_qc_review_YYYYMMDD.md`
+
+This task originally generated undated v002-v006 files. Do not regenerate those existing QC-passed videos just for naming cleanup; apply the rule to future generation.

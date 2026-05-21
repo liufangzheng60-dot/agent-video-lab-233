@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -11,7 +12,6 @@ from typing import Any
 from helpers.subtitle_overlay import (
     build_ffmpeg_command,
     contains_chinese,
-    format_srt_time,
     read_json,
     render_srt,
 )
@@ -22,7 +22,6 @@ VARIANTS = [
         "version": "v002",
         "key": "cost_hook",
         "label": "Cost Hook",
-        "output_name": "final_v002_cost_hook.mp4",
         "captions": {
             "hook": "Stop paying $20+ for nail trims.",
             "problem": "At-home trims can save repeat visits.",
@@ -37,7 +36,6 @@ VARIANTS = [
         "version": "v003",
         "key": "stress_hook",
         "label": "Stress Hook",
-        "output_name": "final_v003_stress_hook.mp4",
         "captions": {
             "hook": "Nail trims do not have to be stressful.",
             "problem": "Nervous pets make grooming harder.",
@@ -52,7 +50,6 @@ VARIANTS = [
         "version": "v004",
         "key": "led_safety_hook",
         "label": "Safety / LED Hook",
-        "output_name": "final_v004_led_safety_hook.mp4",
         "captions": {
             "hook": "LED light helps you see clearly.",
             "problem": "Guessing makes nail trims harder.",
@@ -67,7 +64,6 @@ VARIANTS = [
         "version": "v005",
         "key": "home_grooming_hook",
         "label": "At-home Grooming Hook",
-        "output_name": "final_v005_home_grooming_hook.mp4",
         "captions": {
             "hook": "Easier grooming at home.",
             "problem": "Nail care piles up fast.",
@@ -82,7 +78,6 @@ VARIANTS = [
         "version": "v006",
         "key": "fast_demo_hook",
         "label": "Fast Demo Hook",
-        "output_name": "final_v006_fast_demo_hook.mp4",
         "captions": {
             "hook": "Clip, smooth, done.",
             "problem": "Skip the overthinking.",
@@ -95,10 +90,15 @@ VARIANTS = [
     },
 ]
 
+DATE_RE = re.compile(r"^\d{8}$")
 
-def run_batch_variants(project_root: Path | str | None = None) -> dict[str, Any]:
-    """Generate five English subtitle variants and burn each into a video."""
+
+def run_batch_variants(project_root: Path | str | None = None, date_stamp: str | None = None) -> dict[str, Any]:
+    """Generate five English subtitle variants and burn each into a dated video."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
+    stamp = date_stamp or current_date_stamp()
+    validate_date_stamp(stamp)
+
     final_path = root / "outputs" / "renders" / "final.mp4"
     timeline_path = root / "outputs" / "timelines" / "timeline.json"
     strategy_path = root / "outputs" / "edit_strategy" / "edit_strategy.json"
@@ -113,14 +113,14 @@ def run_batch_variants(project_root: Path | str | None = None) -> dict[str, Any]
     feedback_dir.mkdir(parents=True, exist_ok=True)
 
     timeline = read_json(timeline_path)
-    edit_strategy = read_json(strategy_path) if strategy_path.exists() else {}
+    _ = read_json(strategy_path) if strategy_path.exists() else {}
     ffmpeg_path = which("ffmpeg")
     results = []
 
     for variant in VARIANTS:
         subtitles = build_variant_subtitles(timeline, variant)
-        srt_path = subtitle_dir / f"subtitles_{variant['version']}_{variant['key']}.srt"
-        output_path = render_dir / str(variant["output_name"])
+        srt_path = subtitle_dir / build_subtitle_filename(variant, stamp)
+        output_path = render_dir / build_video_filename(variant, stamp)
         srt_text = render_srt(subtitles)
         srt_path.write_text(srt_text, encoding="utf-8")
 
@@ -128,6 +128,7 @@ def run_batch_variants(project_root: Path | str | None = None) -> dict[str, Any]
             "version": variant["version"],
             "key": variant["key"],
             "label": variant["label"],
+            "date_stamp": stamp,
             "srt_path": srt_path.relative_to(root).as_posix(),
             "output_path": output_path.relative_to(root).as_posix(),
             "english_only": not contains_chinese(srt_text),
@@ -149,12 +150,13 @@ def run_batch_variants(project_root: Path | str | None = None) -> dict[str, Any]
                 result["message"] = f"ffmpeg failed with exit code {completed.returncode}: {completed.stderr[-800:]}"
         results.append(result)
 
-    publish_plan_path = publish_dir / "batch_v002_to_v006_publish_plan.md"
-    feedback_path = feedback_dir / "batch_v002_to_v006_feedback.md"
-    publish_plan_path.write_text(render_publish_plan(results), encoding="utf-8")
-    feedback_path.write_text(render_feedback_template(results), encoding="utf-8")
+    publish_plan_path = publish_dir / build_publish_plan_filename(stamp)
+    feedback_path = feedback_dir / build_feedback_filename(stamp)
+    publish_plan_path.write_text(render_publish_plan(results, stamp), encoding="utf-8")
+    feedback_path.write_text(render_feedback_template(results, stamp), encoding="utf-8")
 
     return {
+        "date_stamp": stamp,
         "results": results,
         "publish_plan_path": publish_plan_path,
         "feedback_path": feedback_path,
@@ -162,6 +164,41 @@ def run_batch_variants(project_root: Path | str | None = None) -> dict[str, Any]
         "source_timeline": timeline_path,
         "source_edit_strategy": strategy_path,
     }
+
+
+def current_date_stamp() -> str:
+    """Return local date as YYYYMMDD for generated asset names."""
+    return datetime.now().strftime("%Y%m%d")
+
+
+def validate_date_stamp(date_stamp: str) -> None:
+    if not DATE_RE.match(date_stamp):
+        raise ValueError(f"date_stamp must use YYYYMMDD format: {date_stamp}")
+
+
+def build_video_filename(variant: dict[str, Any], date_stamp: str) -> str:
+    validate_date_stamp(date_stamp)
+    return f"final_{variant['version']}_{variant['key']}_{date_stamp}.mp4"
+
+
+def build_subtitle_filename(variant: dict[str, Any], date_stamp: str) -> str:
+    validate_date_stamp(date_stamp)
+    return f"subtitles_{variant['version']}_{variant['key']}_{date_stamp}.srt"
+
+
+def build_publish_plan_filename(date_stamp: str) -> str:
+    validate_date_stamp(date_stamp)
+    return f"batch_v002_to_v006_publish_plan_{date_stamp}.md"
+
+
+def build_feedback_filename(date_stamp: str) -> str:
+    validate_date_stamp(date_stamp)
+    return f"batch_v002_to_v006_feedback_{date_stamp}.md"
+
+
+def build_qc_review_filename(date_stamp: str) -> str:
+    validate_date_stamp(date_stamp)
+    return f"batch_v002_to_v006_qc_review_{date_stamp}.md"
 
 
 def get_variant_configs() -> list[dict[str, Any]]:
@@ -188,10 +225,13 @@ def build_variant_subtitles(timeline: dict[str, Any], variant: dict[str, Any]) -
     return subtitles
 
 
-def render_publish_plan(results: list[dict[str, Any]]) -> str:
+def render_publish_plan(results: list[dict[str, Any]], date_stamp: str | None = None) -> str:
+    stamp = date_stamp or current_date_stamp()
+    validate_date_stamp(stamp)
     lines = [
         "# Batch Publish Plan v002-v006",
         "",
+        f"- Date stamp: `{stamp}`",
         f"- Prepared at: `{datetime.now(timezone.utc).isoformat()}`",
         "- Boundary: manual TikTok Shop US publishing only; no automatic publishing or API calls.",
         "",
@@ -228,6 +268,7 @@ def render_publish_plan(results: list[dict[str, Any]]) -> str:
             "| --- | --- | --- |",
             "| Confirm each video opens and plays | TODO |  |",
             "| Confirm subtitles are English-only | TODO |  |",
+            "| Confirm filenames include YYYYMMDD date stamp | TODO |  |",
             "| Confirm no exaggerated safety or medical claims | TODO |  |",
             "| Select TikTok account and product attachment | TODO |  |",
             "| Publish variants separately and record URLs | TODO |  |",
@@ -244,11 +285,14 @@ def render_publish_plan(results: list[dict[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
-def render_feedback_template(results: list[dict[str, Any]]) -> str:
+def render_feedback_template(results: list[dict[str, Any]], date_stamp: str | None = None) -> str:
+    stamp = date_stamp or current_date_stamp()
+    validate_date_stamp(stamp)
     lines = [
         "# Batch Feedback v002-v006",
         "",
-        "Record each variant after manual publishing. Compare results before deciding v007 direction.",
+        f"- Date stamp: `{stamp}`",
+        "- Record each variant after manual publishing. Compare results before deciding v007 direction.",
         "",
         "## Metrics Table",
         "",
@@ -277,4 +321,3 @@ def render_feedback_template(results: list[dict[str, Any]]) -> str:
         ]
     )
     return "\n".join(lines) + "\n"
-
