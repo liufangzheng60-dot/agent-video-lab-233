@@ -112,6 +112,33 @@ class EditStrategyTests(unittest.TestCase):
 
         self.assertEqual(result["edit_strategy"]["target_duration_seconds"], {"min": 7, "max": 15})
 
+    def test_legacy_edit_strategy_output_path_remains_default(self) -> None:
+        result = run_edit_strategy(self.project_root)
+
+        self.assertEqual(result["json_path"], self.project_root / "outputs" / "edit_strategy" / "edit_strategy.json")
+        self.assertEqual(result["markdown_path"], self.project_root / "outputs" / "edit_strategy" / "edit_strategy.md")
+
+    def test_product_edit_strategy_writes_to_product_outputs(self) -> None:
+        product_root = self.project_root / "products" / "pet_nail_trimmer"
+        pack_dir = product_root / "outputs" / "material_pack"
+        output_dir = product_root / "outputs" / "edit_strategy"
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        pack_path = pack_dir / "material_pack.json"
+        source_pack = json.loads((self.project_root / "outputs" / "material_pack" / "material_pack.json").read_text(encoding="utf-8"))
+        source_pack["inventory_source"] = "outputs/material_inventory/material_inventory.json"
+        pack_path.write_text(json.dumps(source_pack), encoding="utf-8")
+
+        result = run_edit_strategy(
+            project_root=self.project_root / "03_tk_video_agent",
+            pack_path=pack_path,
+            output_dir=output_dir,
+            report_root=product_root,
+        )
+
+        self.assertEqual(result["json_path"], output_dir / "edit_strategy.json")
+        self.assertEqual(result["markdown_path"], output_dir / "edit_strategy.md")
+        self.assertEqual(result["edit_strategy"]["source_material_pack"], "outputs/material_pack/material_pack.json")
+
 
 if __name__ == "__main__":
     unittest.main()

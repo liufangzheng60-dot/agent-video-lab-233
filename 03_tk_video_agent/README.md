@@ -124,6 +124,21 @@ python main.py edit-strategy
 
 第一版只生成 TikTok 商品短视频剪辑策略，目标时长 7-15 秒，结构为 `hook -> problem -> demo -> proof -> cta`。它会使用素材包中的 `suggested_role`，并把非 9:16 视频风险传递到策略中。本阶段不做 AI 视觉理解、转录、剪辑、渲染或外部 API 调用。
 
+Product-scoped edit strategy is also supported:
+
+```bash
+python main.py edit-strategy --product pet_nail_trimmer
+```
+
+This reads:
+
+- `../products/pet_nail_trimmer/outputs/material_pack/material_pack.json`
+
+And writes:
+
+- `../products/pet_nail_trimmer/outputs/edit_strategy/edit_strategy.json`
+- `../products/pet_nail_trimmer/outputs/edit_strategy/edit_strategy.md`
+
 ## 时间轴生成
 
 运行：
@@ -309,12 +324,12 @@ Current product-aware command:
 ```bash
 python main.py inventory --product pet_nail_trimmer
 python main.py material-pack --product pet_nail_trimmer
+python main.py edit-strategy --product pet_nail_trimmer
 ```
 
 Future product-aware command target:
 
 ```bash
-python main.py edit-strategy --product pet_nail_trimmer
 python main.py timeline --product pet_nail_trimmer
 python main.py render --product pet_nail_trimmer
 python main.py subtitles --product pet_nail_trimmer

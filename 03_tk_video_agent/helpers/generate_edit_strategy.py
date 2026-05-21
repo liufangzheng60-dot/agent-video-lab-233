@@ -52,14 +52,20 @@ SEGMENT_BLUEPRINTS = (
 )
 
 
-def run_edit_strategy(project_root: Path | str | None = None) -> dict[str, Any]:
+def run_edit_strategy(
+    project_root: Path | str | None = None,
+    pack_path: Path | str | None = None,
+    output_dir: Path | str | None = None,
+    report_root: Path | str | None = None,
+) -> dict[str, Any]:
     """Read material_pack.json and write edit strategy reports."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
-    pack_path = root / "outputs" / "material_pack" / "material_pack.json"
-    output_dir = root / "outputs" / "edit_strategy"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    source_pack_path = Path(pack_path) if pack_path is not None else root / "outputs" / "material_pack" / "material_pack.json"
+    destination = Path(output_dir) if output_dir is not None else root / "outputs" / "edit_strategy"
+    relative_root = Path(report_root) if report_root is not None else root
+    destination.mkdir(parents=True, exist_ok=True)
 
-    material_pack = _read_material_pack(pack_path)
+    material_pack = _read_material_pack(source_pack_path)
     materials = material_pack.get("materials", [])
     missing_materials = _build_missing_materials(material_pack, materials)
     risk_flags = _build_risk_flags(material_pack, materials)
@@ -68,7 +74,7 @@ def run_edit_strategy(project_root: Path | str | None = None) -> dict[str, Any]:
 
     edit_strategy = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source_material_pack": pack_path.relative_to(root).as_posix(),
+        "source_material_pack": _safe_relative(source_pack_path, relative_root),
         "video_goal": "Create a 7-15 second TikTok product short that turns the product brief and available source materials into a clear hook, problem, demo, proof, and CTA flow.",
         "target_duration_seconds": {"min": 7, "max": 15},
         "strategy_segments": strategy_segments,
@@ -78,8 +84,8 @@ def run_edit_strategy(project_root: Path | str | None = None) -> dict[str, Any]:
         "next_step": "Use this strategy to plan a structured timeline. Do not render or edit video in P0_003.",
     }
 
-    json_path = output_dir / "edit_strategy.json"
-    markdown_path = output_dir / "edit_strategy.md"
+    json_path = destination / "edit_strategy.json"
+    markdown_path = destination / "edit_strategy.md"
     json_path.write_text(json.dumps(edit_strategy, ensure_ascii=False, indent=2), encoding="utf-8")
     markdown_path.write_text(_render_markdown(edit_strategy, material_pack), encoding="utf-8")
     return {"edit_strategy": edit_strategy, "json_path": json_path, "markdown_path": markdown_path}
@@ -158,6 +164,13 @@ def _unique(items: list[str]) -> list[str]:
             result.append(item)
             seen.add(item)
     return result
+
+
+def _safe_relative(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _render_markdown(edit_strategy: dict[str, Any], material_pack: dict[str, Any]) -> str:

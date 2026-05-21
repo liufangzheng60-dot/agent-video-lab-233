@@ -1,0 +1,69 @@
+{
+  "generated_at": "2026-05-21T12:48:49.416757+00:00",
+  "source_material_pack": "outputs/material_pack/material_pack.json",
+  "video_goal": "Create a 7-15 second TikTok product short that turns the product brief and available source materials into a clear hook, problem, demo, proof, and CTA flow.",
+  "target_duration_seconds": {
+    "min": 7,
+    "max": 15
+  },
+  "strategy_segments": [
+    {
+      "segment_name": "hook",
+      "purpose": "Stop the scroll by showing the cost or pain point immediately.",
+      "target_duration": "0-2s",
+      "recommended_material_role": "product_brief_or_script",
+      "caption_direction": "Stop paying $20+ for nail trims.",
+      "execution_note": "Use the strongest pain-point line from the product brief as opening text. Pair with the clearest product or demo visual available. Missing role: product_brief_or_script.",
+      "available_materials": []
+    },
+    {
+      "segment_name": "problem",
+      "purpose": "Make the viewer recognize the grooming pain or cost problem.",
+      "target_duration": "2-4s",
+      "recommended_material_role": "demo_or_source_clip",
+      "caption_direction": "Pet nail trims are stressful and expensive.",
+      "execution_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming. Missing role: demo_or_source_clip.",
+      "available_materials": []
+    },
+    {
+      "segment_name": "demo",
+      "purpose": "Show the product mechanism or use case clearly.",
+      "target_duration": "4-9s",
+      "recommended_material_role": "demo_or_source_clip",
+      "caption_direction": "LED light helps you see the quick before cutting.",
+      "execution_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work. Missing role: demo_or_source_clip.",
+      "available_materials": []
+    },
+    {
+      "segment_name": "proof",
+      "purpose": "Give the viewer confidence that the product is safer, quieter, or easier.",
+      "target_duration": "9-12s",
+      "recommended_material_role": "product_reference_image",
+      "caption_direction": "Safer, easier, cheaper at home.",
+      "execution_note": "Use product image as a stable proof visual if no dedicated proof clip exists. Keep text short and benefit-led. Missing role: product_reference_image.",
+      "available_materials": []
+    },
+    {
+      "segment_name": "cta",
+      "purpose": "Tell the viewer what to do next.",
+      "target_duration": "12-15s",
+      "recommended_material_role": "product_brief_or_script",
+      "caption_direction": "Grab yours below.",
+      "execution_note": "End with TikTok Shop-oriented CTA text. Do not publish automatically; this is only strategy output. Missing role: product_brief_or_script.",
+      "available_materials": []
+    }
+  ],
+  "material_usage": [],
+  "risk_flags": [
+    "missing_raw_videos",
+    "missing_product_images"
+  ],
+  "missing_materials": [
+    "raw_videos",
+    "product_images",
+    "missing_role_demo_or_source_clip",
+    "missing_role_product_brief_or_script",
+    "missing_role_product_reference_image"
+  ],
+  "next_step": "Use this strategy to plan a structured timeline. Do not render or edit video in P0_003."
+}

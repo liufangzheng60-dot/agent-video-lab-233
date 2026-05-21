@@ -22,7 +22,8 @@ def main() -> None:
     inventory_parser.add_argument("--product", help="Optional product slug for product-scoped inventory.")
     material_pack_parser = subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
     material_pack_parser.add_argument("--product", help="Optional product slug for product-scoped material pack.")
-    subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
+    edit_strategy_parser = subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
+    edit_strategy_parser.add_argument("--product", help="Optional product slug for product-scoped edit strategy.")
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
     subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
@@ -80,7 +81,22 @@ def main() -> None:
         return
 
     if args.command == "edit-strategy":
-        result = run_edit_strategy(project_root)
+        try:
+            if args.product:
+                repo_root = repo_root_from_agent_root(project_root)
+                workspace = require_product_workspace(repo_root, args.product)
+                result = run_edit_strategy(
+                    project_root=project_root,
+                    pack_path=workspace.outputs / "material_pack" / "material_pack.json",
+                    output_dir=workspace.outputs / "edit_strategy",
+                    report_root=workspace.root,
+                )
+            else:
+                result = run_edit_strategy(project_root)
+        except FileNotFoundError as exc:
+            print(f"Edit strategy failed: {exc}")
+            raise SystemExit(1) from exc
+
         edit_strategy = result["edit_strategy"]
         print(f"Edit strategy generated: {len(edit_strategy['strategy_segments'])} segments")
         print(f"JSON: {result['json_path']}")
