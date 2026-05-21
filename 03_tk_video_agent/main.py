@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from helpers.batch_variants import run_batch_variants
 from helpers.build_material_pack import run_material_pack
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
@@ -22,6 +23,7 @@ def main() -> None:
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
     subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
+    subparsers.add_parser("batch-variants", help="Generate v002-v006 subtitle-burned A/B test videos.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -75,6 +77,16 @@ def main() -> None:
         print(f"Plan: {result['plan_path']}")
         print(f"Video: {result['subtitled_path']}")
         print(report["message"])
+        return
+
+    if args.command == "batch-variants":
+        result = run_batch_variants(project_root)
+        success_count = sum(1 for item in result["results"] if item["status"] == "success")
+        print(f"Batch variants generated: {success_count}/{len(result['results'])} videos")
+        print(f"Publish plan: {result['publish_plan_path']}")
+        print(f"Feedback template: {result['feedback_path']}")
+        for item in result["results"]:
+            print(f"{item['version']} {item['key']}: {item['status']} - {item['output_path']}")
         return
 
     parser.print_help()

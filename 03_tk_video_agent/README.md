@@ -209,3 +209,21 @@ Prepared files:
 ```
 
 Use the publish pack to manually post `outputs/renders/final_subtitled.mp4` to TikTok Shop US. No automatic publishing, external API call, video modification, or re-rendering is performed by this project step.
+
+## Batch A/B Variant Generation
+
+Run:
+
+```bash
+python main.py batch-variants
+```
+
+This generates five TikTok Shop US test variants from the existing `final.mp4`:
+
+- v002 cost hook
+- v003 stress hook
+- v004 LED safety hook
+- v005 home grooming hook
+- v006 fast demo hook
+
+Outputs include five subtitle-burned mp4 files, SRT files under `outputs/subtitles/batch_variants/`, and manual publish/feedback templates under `../05_final_outputs/`. No automatic TikTok publishing or external API calls are performed.
