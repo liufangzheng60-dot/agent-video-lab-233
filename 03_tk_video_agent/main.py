@@ -26,7 +26,8 @@ def main() -> None:
     edit_strategy_parser.add_argument("--product", help="Optional product slug for product-scoped edit strategy.")
     timeline_parser = subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
     timeline_parser.add_argument("--product", help="Optional product slug for product-scoped timeline.")
-    subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
+    render_parser = subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
+    render_parser.add_argument("--product", help="Optional product slug for product-scoped render.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
     subparsers.add_parser("batch-variants", help="Generate v002-v006 subtitle-burned A/B test videos.")
 
@@ -129,7 +130,24 @@ def main() -> None:
         return
 
     if args.command == "render":
-        result = run_render(project_root)
+        try:
+            if args.product:
+                repo_root = repo_root_from_agent_root(project_root)
+                workspace = require_product_workspace(repo_root, args.product)
+                result = run_render(
+                    project_root=project_root,
+                    timeline_path=workspace.outputs / "timelines" / "timeline.json",
+                    material_pack_path=workspace.outputs / "material_pack" / "material_pack.json",
+                    output_dir=workspace.outputs / "renders",
+                    media_root=workspace.root,
+                    report_root=workspace.root,
+                )
+            else:
+                result = run_render(project_root)
+        except FileNotFoundError as exc:
+            print(f"Render failed: {exc}")
+            raise SystemExit(1) from exc
+
         report = result["report"]
         print(f"Render status: {report['status']}")
         print(f"Final: {result['final_path']}")

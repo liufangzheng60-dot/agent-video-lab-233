@@ -74,6 +74,48 @@ class RenderTests(unittest.TestCase):
         self.assertIn("ffmpeg was not found", result["report"]["message"])
         self.assertIn("ffmpeg was not found", result["report_path"].read_text(encoding="utf-8"))
 
+    @patch("helpers.render.which", return_value=None)
+    def test_legacy_render_output_path_remains_default(self, _mock_which: object) -> None:
+        result = run_render(self.project_root)
+
+        self.assertEqual(result["final_path"], self.project_root / "outputs" / "renders" / "final.mp4")
+        self.assertEqual(result["report_path"], self.project_root / "outputs" / "renders" / "render_report.md")
+
+    @patch("helpers.render.which", return_value=None)
+    def test_product_render_paths_write_to_product_outputs(self, _mock_which: object) -> None:
+        product_root = self.project_root / "products" / "pet_nail_trimmer"
+        timeline_dir = product_root / "outputs" / "timelines"
+        pack_dir = product_root / "outputs" / "material_pack"
+        output_dir = product_root / "outputs" / "renders"
+        raw_video_dir = product_root / "assets" / "raw_videos"
+        timeline_dir.mkdir(parents=True, exist_ok=True)
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        raw_video_dir.mkdir(parents=True, exist_ok=True)
+        timeline = read_timeline(self.project_root / "outputs" / "timelines" / "timeline.json")
+        timeline["segments"][1]["source_material"] = "assets/raw_videos/clip.mp4"
+        timeline["source_material_pack"] = "outputs/material_pack/material_pack.json"
+        (timeline_dir / "timeline.json").write_text(json.dumps(timeline), encoding="utf-8")
+        (pack_dir / "material_pack.json").write_text(
+            (self.project_root / "outputs" / "material_pack" / "material_pack.json").read_text(encoding="utf-8"),
+            encoding="utf-8",
+        )
+        (raw_video_dir / "clip.mp4").write_bytes(b"fake video")
+
+        result = run_render(
+            project_root=self.project_root / "03_tk_video_agent",
+            timeline_path=timeline_dir / "timeline.json",
+            material_pack_path=pack_dir / "material_pack.json",
+            output_dir=output_dir,
+            media_root=product_root,
+            report_root=product_root,
+        )
+
+        self.assertEqual(result["final_path"], output_dir / "final.mp4")
+        self.assertEqual(result["report_path"], output_dir / "render_report.md")
+        self.assertTrue(result["report_path"].exists())
+        self.assertEqual(result["report"]["timeline_path"], "outputs/timelines/timeline.json")
+        self.assertEqual(result["report"]["output_path"], "outputs/renders/final.mp4")
+
     def test_can_read_timeline_json(self) -> None:
         timeline = read_timeline(self.project_root / "outputs" / "timelines" / "timeline.json")
 

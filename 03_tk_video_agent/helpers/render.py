@@ -15,18 +15,27 @@ TARGET_HEIGHT = 1280
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v")
 
 
-def run_render(project_root: Path | str | None = None) -> dict[str, Any]:
+def run_render(
+    project_root: Path | str | None = None,
+    timeline_path: Path | str | None = None,
+    material_pack_path: Path | str | None = None,
+    output_dir: Path | str | None = None,
+    media_root: Path | str | None = None,
+    report_root: Path | str | None = None,
+) -> dict[str, Any]:
     """Render a minimal review video from timeline source material."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
-    timeline_path = root / "outputs" / "timelines" / "timeline.json"
-    material_pack_path = root / "outputs" / "material_pack" / "material_pack.json"
-    output_dir = root / "outputs" / "renders"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    source_timeline_path = Path(timeline_path) if timeline_path is not None else root / "outputs" / "timelines" / "timeline.json"
+    source_material_pack_path = Path(material_pack_path) if material_pack_path is not None else root / "outputs" / "material_pack" / "material_pack.json"
+    destination = Path(output_dir) if output_dir is not None else root / "outputs" / "renders"
+    source_root = Path(media_root) if media_root is not None else root
+    relative_root = Path(report_root) if report_root is not None else root
+    destination.mkdir(parents=True, exist_ok=True)
 
-    final_path = output_dir / "final.mp4"
-    report_path = output_dir / "render_report.md"
-    timeline = read_timeline(timeline_path)
-    material_pack = _read_json(material_pack_path) if material_pack_path.exists() else {}
+    final_path = destination / "final.mp4"
+    report_path = destination / "render_report.md"
+    timeline = read_timeline(source_timeline_path)
+    material_pack = _read_json(source_material_pack_path) if source_material_pack_path.exists() else {}
     source_materials = parse_video_source_materials(timeline)
     total_duration = float(timeline.get("target_duration_seconds") or _sum_segment_durations(timeline))
     risk_flags = _collect_risk_flags(timeline, material_pack)
@@ -35,9 +44,9 @@ def run_render(project_root: Path | str | None = None) -> dict[str, Any]:
     report: dict[str, Any] = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
         "status": "failed",
-        "timeline_path": timeline_path.relative_to(root).as_posix(),
-        "material_pack_path": material_pack_path.relative_to(root).as_posix(),
-        "output_path": final_path.relative_to(root).as_posix(),
+        "timeline_path": _safe_relative(source_timeline_path, relative_root),
+        "material_pack_path": _safe_relative(source_material_pack_path, relative_root),
+        "output_path": _safe_relative(final_path, relative_root),
         "total_duration_seconds": total_duration,
         "source_materials": source_materials,
         "risk_flags": risk_flags,
@@ -51,14 +60,14 @@ def run_render(project_root: Path | str | None = None) -> dict[str, Any]:
         write_render_report(report_path, report)
         return {"success": False, "final_path": final_path, "report_path": report_path, "report": report}
 
-    source_path = _resolve_first_existing_video(root, source_materials)
+    source_path = _resolve_first_existing_video(source_root, source_materials)
     if source_path is None:
         report["message"] = "No existing mp4 source material referenced by timeline."
         write_render_report(report_path, report)
         return {"success": False, "final_path": final_path, "report_path": report_path, "report": report}
 
     command = build_ffmpeg_command(ffmpeg_path, source_path, final_path, total_duration)
-    report["ffmpeg_command_summary"] = summarize_command(command, root)
+    report["ffmpeg_command_summary"] = summarize_command(command, relative_root)
 
     try:
         completed = subprocess.run(command, capture_output=True, text=True, check=False)
@@ -207,3 +216,10 @@ def _resolve_first_existing_video(root: Path, source_materials: list[str]) -> Pa
         if path.exists() and path.is_file():
             return path
     return None
+
+
+def _safe_relative(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()

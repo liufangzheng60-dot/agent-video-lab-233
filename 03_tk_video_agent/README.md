@@ -196,6 +196,25 @@ python main.py render
 
 第一版使用本机 PATH 中的 `ffmpeg`，把 timeline 引用的 mp4 素材生成一个 9:16 可审片视频。当前采用 scale + pad 输出 720x1280，并记录非 9:16 风险。不做 AI 视觉理解、转录、自动发布或 UI。
 
+Product-scoped render is also supported:
+
+```bash
+python main.py render --product pet_nail_trimmer
+```
+
+This reads:
+
+- `../products/pet_nail_trimmer/outputs/timelines/timeline.json`
+- `../products/pet_nail_trimmer/outputs/material_pack/material_pack.json`
+- `../products/pet_nail_trimmer/assets/raw_videos/`
+
+And writes:
+
+- `../products/pet_nail_trimmer/outputs/renders/final.mp4`
+- `../products/pet_nail_trimmer/outputs/renders/render_report.md`
+
+If the product timeline does not reference an existing video under the product workspace, render writes a clear `render_report.md` failure instead of moving or borrowing global files.
+
 ## 人工审片
 
 审片文件：
@@ -342,12 +361,12 @@ python main.py inventory --product pet_nail_trimmer
 python main.py material-pack --product pet_nail_trimmer
 python main.py edit-strategy --product pet_nail_trimmer
 python main.py timeline --product pet_nail_trimmer
+python main.py render --product pet_nail_trimmer
 ```
 
 Future product-aware command target:
 
 ```bash
-python main.py render --product pet_nail_trimmer
 python main.py subtitles --product pet_nail_trimmer
 python main.py batch-variants --product pet_nail_trimmer
 ```
