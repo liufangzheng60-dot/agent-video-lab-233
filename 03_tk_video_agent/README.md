@@ -242,3 +242,47 @@ Future generated batch outputs must include a concrete `YYYYMMDD` date stamp in 
 - `batch_v002_to_v006_qc_review_YYYYMMDD.md`
 
 This makes publishing, feedback, and audit records easier to connect to the exact batch date.
+
+## Product-Level Workspace Structure
+
+The project now supports a product-level workspace pattern while keeping the original global `inputs/` and `outputs/` flow compatible.
+
+Example product workspace:
+
+```text
+../products/pet_nail_trimmer/
+├── product_brief.md
+├── assets/
+│   ├── raw_videos/
+│   ├── product_images/
+│   ├── ai_generated_clips/
+│   ├── reference_videos/
+│   └── scripts/
+├── outputs/
+│   ├── material_inventory/
+│   ├── material_pack/
+│   ├── edit_strategy/
+│   ├── timelines/
+│   ├── subtitles/
+│   ├── renders/
+│   └── reports/
+└── publish/
+    ├── publish_records/
+    └── performance_feedback/
+```
+
+Future command target:
+
+```bash
+python main.py inventory --product pet_nail_trimmer
+python main.py material-pack --product pet_nail_trimmer
+python main.py edit-strategy --product pet_nail_trimmer
+python main.py timeline --product pet_nail_trimmer
+python main.py render --product pet_nail_trimmer
+python main.py subtitles --product pet_nail_trimmer
+python main.py batch-variants --product pet_nail_trimmer
+```
+
+Current commands remain compatible without `--product`. No existing files were moved.
+
+Future matrix direction: multiple source materials -> keyframe extraction -> clip library -> multiple Hook timelines -> batch rendering -> performance feedback selects winner. The goal is compliant, differentiated, non-duplicate TikTok Shop product video variants, not algorithm evasion.

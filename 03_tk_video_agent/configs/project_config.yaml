@@ -1,8 +1,18 @@
 ﻿project:
   name: agent-video-lab
-  stage: scaffold
+  stage: product_workspace_transition
   language: zh-CN
 
 paths:
   timeline_json: outputs/timelines/timeline.json
   capcut_timeline_csv: outputs/timelines/capcut_timeline.csv
+
+compatibility:
+  legacy_global_flow: true
+  legacy_inputs: inputs
+  legacy_outputs: outputs
+
+products:
+  root: ../products
+  example_slug: pet_nail_trimmer
+  future_cli_pattern: python main.py <command> --product <product_slug>
