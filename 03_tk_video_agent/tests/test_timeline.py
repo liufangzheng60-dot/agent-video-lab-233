@@ -102,6 +102,39 @@ class TimelineTests(unittest.TestCase):
 
         self.assertIn("No video editing", result["timeline"]["notes"][1])
 
+    def test_legacy_timeline_output_path_remains_default(self) -> None:
+        result = run_timeline(self.project_root)
+
+        self.assertEqual(result["json_path"], self.project_root / "outputs" / "timelines" / "timeline.json")
+        self.assertEqual(result["csv_path"], self.project_root / "outputs" / "timelines" / "capcut_timeline.csv")
+
+    def test_product_timeline_writes_to_product_outputs(self) -> None:
+        product_root = self.project_root / "products" / "pet_nail_trimmer"
+        strategy_dir = product_root / "outputs" / "edit_strategy"
+        pack_dir = product_root / "outputs" / "material_pack"
+        output_dir = product_root / "outputs" / "timelines"
+        strategy_dir.mkdir(parents=True, exist_ok=True)
+        pack_dir.mkdir(parents=True, exist_ok=True)
+        source_strategy = json.loads((self.project_root / "outputs" / "edit_strategy" / "edit_strategy.json").read_text(encoding="utf-8"))
+        source_pack = json.loads((self.project_root / "outputs" / "material_pack" / "material_pack.json").read_text(encoding="utf-8"))
+        strategy_path = strategy_dir / "edit_strategy.json"
+        pack_path = pack_dir / "material_pack.json"
+        strategy_path.write_text(json.dumps(source_strategy), encoding="utf-8")
+        pack_path.write_text(json.dumps(source_pack), encoding="utf-8")
+
+        result = run_timeline(
+            project_root=self.project_root / "03_tk_video_agent",
+            strategy_path=strategy_path,
+            material_pack_path=pack_path,
+            output_dir=output_dir,
+            report_root=product_root,
+        )
+
+        self.assertEqual(result["json_path"], output_dir / "timeline.json")
+        self.assertEqual(result["csv_path"], output_dir / "capcut_timeline.csv")
+        self.assertEqual(result["timeline"]["source_edit_strategy"], "outputs/edit_strategy/edit_strategy.json")
+        self.assertEqual(result["timeline"]["source_material_pack"], "outputs/material_pack/material_pack.json")
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-05-21T13:30:23.132215+00:00",
+  "source_edit_strategy": "outputs/edit_strategy/edit_strategy.json",
+  "source_material_pack": "outputs/material_pack/material_pack.json",
+  "target_duration_seconds": 15.0,
+  "segments": [
+    {
+      "start": 0.0,
+      "end": 2.0,
+      "duration": 2.0,
+      "segment_name": "hook",
+      "purpose": "Stop the scroll by showing the cost or pain point immediately.",
+      "source_material": "",
+      "caption": "Stop paying $20+ for nail trims.",
+      "editing_note": "Use the strongest pain-point line from the product brief as opening text. Pair with the clearest product or demo visual available. Missing role: product_brief_or_script.",
+      "risk_flags": []
+    },
+    {
+      "start": 2.0,
+      "end": 4.0,
+      "duration": 2.0,
+      "segment_name": "problem",
+      "purpose": "Make the viewer recognize the grooming pain or cost problem.",
+      "source_material": "",
+      "caption": "Pet nail trims are stressful and expensive.",
+      "editing_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming. Missing role: demo_or_source_clip.",
+      "risk_flags": []
+    },
+    {
+      "start": 4.0,
+      "end": 9.0,
+      "duration": 5.0,
+      "segment_name": "demo",
+      "purpose": "Show the product mechanism or use case clearly.",
+      "source_material": "",
+      "caption": "LED light helps you see the quick before cutting.",
+      "editing_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work. Missing role: demo_or_source_clip.",
+      "risk_flags": []
+    },
+    {
+      "start": 9.0,
+      "end": 12.0,
+      "duration": 3.0,
+      "segment_name": "proof",
+      "purpose": "Give the viewer confidence that the product is safer, quieter, or easier.",
+      "source_material": "",
+      "caption": "Safer, easier, cheaper at home.",
+      "editing_note": "Use product image as a stable proof visual if no dedicated proof clip exists. Keep text short and benefit-led. Missing role: product_reference_image.",
+      "risk_flags": []
+    },
+    {
+      "start": 12.0,
+      "end": 15.0,
+      "duration": 3.0,
+      "segment_name": "cta",
+      "purpose": "Tell the viewer what to do next.",
+      "source_material": "",
+      "caption": "Grab yours below.",
+      "editing_note": "End with TikTok Shop-oriented CTA text. Do not publish automatically; this is only strategy output. Missing role: product_brief_or_script.",
+      "risk_flags": []
+    }
+  ],
+  "missing_materials": [
+    "raw_videos",
+    "product_images",
+    "missing_role_demo_or_source_clip",
+    "missing_role_product_brief_or_script",
+    "missing_role_product_reference_image"
+  ],
+  "risk_flags": [
+    "missing_raw_videos",
+    "missing_product_images"
+  ],
+  "notes": [
+    "Timeline is for planning and manual CapCut recreation only.",
+    "No video editing, rendering, ffmpeg, or external API calls are performed in P0_004."
+  ]
+}

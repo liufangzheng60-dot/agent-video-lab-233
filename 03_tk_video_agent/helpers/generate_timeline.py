@@ -32,24 +32,31 @@ CSV_FIELDS = [
 VIDEO_EXTENSIONS = (".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v")
 
 
-def run_timeline(project_root: Path | str | None = None) -> dict[str, Any]:
+def run_timeline(
+    project_root: Path | str | None = None,
+    strategy_path: Path | str | None = None,
+    material_pack_path: Path | str | None = None,
+    output_dir: Path | str | None = None,
+    report_root: Path | str | None = None,
+) -> dict[str, Any]:
     """Read strategy and material pack, then write timeline JSON and CSV."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
-    strategy_path = root / "outputs" / "edit_strategy" / "edit_strategy.json"
-    material_pack_path = root / "outputs" / "material_pack" / "material_pack.json"
-    output_dir = root / "outputs" / "timelines"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    source_strategy_path = Path(strategy_path) if strategy_path is not None else root / "outputs" / "edit_strategy" / "edit_strategy.json"
+    source_material_pack_path = Path(material_pack_path) if material_pack_path is not None else root / "outputs" / "material_pack" / "material_pack.json"
+    destination = Path(output_dir) if output_dir is not None else root / "outputs" / "timelines"
+    relative_root = Path(report_root) if report_root is not None else root
+    destination.mkdir(parents=True, exist_ok=True)
 
-    edit_strategy = _read_json(strategy_path)
-    material_pack = _read_json(material_pack_path)
+    edit_strategy = _read_json(source_strategy_path)
+    material_pack = _read_json(source_material_pack_path)
     segments = _build_timeline_segments(edit_strategy)
     missing_materials = _unique(list(edit_strategy.get("missing_materials", [])) + list(material_pack.get("missing_materials", [])))
     risk_flags = _unique(list(edit_strategy.get("risk_flags", [])) + list(material_pack.get("risk_flags", [])))
 
     timeline = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "source_edit_strategy": strategy_path.relative_to(root).as_posix(),
-        "source_material_pack": material_pack_path.relative_to(root).as_posix(),
+        "source_edit_strategy": _safe_relative(source_strategy_path, relative_root),
+        "source_material_pack": _safe_relative(source_material_pack_path, relative_root),
         "target_duration_seconds": _round_time(sum(item["duration"] for item in segments)),
         "segments": segments,
         "missing_materials": missing_materials,
@@ -60,8 +67,8 @@ def run_timeline(project_root: Path | str | None = None) -> dict[str, Any]:
         ],
     }
 
-    json_path = output_dir / "timeline.json"
-    csv_path = output_dir / "capcut_timeline.csv"
+    json_path = destination / "timeline.json"
+    csv_path = destination / "capcut_timeline.csv"
     json_path.write_text(json.dumps(timeline, ensure_ascii=False, indent=2), encoding="utf-8")
     _write_csv(csv_path, segments)
     return {"timeline": timeline, "json_path": json_path, "csv_path": csv_path}
@@ -136,3 +143,10 @@ def _unique(items: list[str]) -> list[str]:
 
 def _round_time(value: float) -> float:
     return round(value, 3)
+
+
+def _safe_relative(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()

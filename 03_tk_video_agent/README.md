@@ -159,6 +159,22 @@ python main.py timeline
 
 第一版只生成可执行规划时间轴和 CapCut 人工复刻 CSV。它不会调用 ffmpeg，不会剪辑，不会渲染，也不会生成 `final.mp4`。
 
+Product-scoped timeline is also supported:
+
+```bash
+python main.py timeline --product pet_nail_trimmer
+```
+
+This reads:
+
+- `../products/pet_nail_trimmer/outputs/edit_strategy/edit_strategy.json`
+- `../products/pet_nail_trimmer/outputs/material_pack/material_pack.json`
+
+And writes:
+
+- `../products/pet_nail_trimmer/outputs/timelines/timeline.json`
+- `../products/pet_nail_trimmer/outputs/timelines/capcut_timeline.csv`
+
 ## 最小渲染
 
 运行：
@@ -325,12 +341,12 @@ Current product-aware command:
 python main.py inventory --product pet_nail_trimmer
 python main.py material-pack --product pet_nail_trimmer
 python main.py edit-strategy --product pet_nail_trimmer
+python main.py timeline --product pet_nail_trimmer
 ```
 
 Future product-aware command target:
 
 ```bash
-python main.py timeline --product pet_nail_trimmer
 python main.py render --product pet_nail_trimmer
 python main.py subtitles --product pet_nail_trimmer
 python main.py batch-variants --product pet_nail_trimmer

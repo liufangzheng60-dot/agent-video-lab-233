@@ -24,7 +24,8 @@ def main() -> None:
     material_pack_parser.add_argument("--product", help="Optional product slug for product-scoped material pack.")
     edit_strategy_parser = subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
     edit_strategy_parser.add_argument("--product", help="Optional product slug for product-scoped edit strategy.")
-    subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
+    timeline_parser = subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
+    timeline_parser.add_argument("--product", help="Optional product slug for product-scoped timeline.")
     subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
     subparsers.add_parser("batch-variants", help="Generate v002-v006 subtitle-burned A/B test videos.")
@@ -104,7 +105,23 @@ def main() -> None:
         return
 
     if args.command == "timeline":
-        result = run_timeline(project_root)
+        try:
+            if args.product:
+                repo_root = repo_root_from_agent_root(project_root)
+                workspace = require_product_workspace(repo_root, args.product)
+                result = run_timeline(
+                    project_root=project_root,
+                    strategy_path=workspace.outputs / "edit_strategy" / "edit_strategy.json",
+                    material_pack_path=workspace.outputs / "material_pack" / "material_pack.json",
+                    output_dir=workspace.outputs / "timelines",
+                    report_root=workspace.root,
+                )
+            else:
+                result = run_timeline(project_root)
+        except FileNotFoundError as exc:
+            print(f"Timeline failed: {exc}")
+            raise SystemExit(1) from exc
+
         timeline = result["timeline"]
         print(f"Timeline generated: {len(timeline['segments'])} segments, {timeline['target_duration_seconds']} seconds")
         print(f"JSON: {result['json_path']}")
