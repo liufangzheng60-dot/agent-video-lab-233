@@ -52,6 +52,19 @@ python main.py inventory
 
 第一版只做本地文件盘点。`ffprobe` 如果可用，会补充媒体时长、分辨率和音轨信息；如果不可用，程序不会中断，会在风险提示中记录 `ffprobe_unavailable`。
 
+Product-scoped inventory is also supported:
+
+```bash
+python main.py inventory --product pet_nail_trimmer
+```
+
+This scans `../products/pet_nail_trimmer/assets/` and writes:
+
+- `../products/pet_nail_trimmer/outputs/material_inventory/material_inventory.json`
+- `../products/pet_nail_trimmer/outputs/material_inventory/material_inventory.md`
+
+Only `inventory` supports `--product` in the current minimal vertical slice. Other commands still use the original global `inputs/` and `outputs/` flow.
+
 ## 素材包生成
 
 运行：
@@ -273,8 +286,15 @@ Example product workspace:
 
 Future command target:
 
+Current product-aware command:
+
 ```bash
 python main.py inventory --product pet_nail_trimmer
+```
+
+Future product-aware command target:
+
+```bash
 python main.py material-pack --product pet_nail_trimmer
 python main.py edit-strategy --product pet_nail_trimmer
 python main.py timeline --product pet_nail_trimmer

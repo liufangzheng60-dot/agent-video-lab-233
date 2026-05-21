@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from helpers.inventory import SOURCE_BUCKETS, run_inventory
+from helpers.inventory import PRODUCT_ASSET_BUCKETS, SOURCE_BUCKETS, run_inventory
 
 
 class InventoryTests(unittest.TestCase):
@@ -60,6 +60,42 @@ class InventoryTests(unittest.TestCase):
         self.assertIsNone(item["height"])
         self.assertIsNone(item["has_audio"])
         self.assertIn("ffprobe_unavailable", item["risk_flags"])
+
+    @patch("helpers.inventory.which", return_value=None)
+    def test_legacy_inventory_output_path_remains_default(self, _mock_which: object) -> None:
+        result = run_inventory(self.project_root)
+
+        self.assertEqual(result["json_path"], self.project_root / "outputs" / "material_inventory" / "material_inventory.json")
+        self.assertEqual(
+            result["markdown_path"],
+            self.project_root / "outputs" / "material_inventory" / "material_inventory.md",
+        )
+
+    @patch("helpers.inventory.which", return_value=None)
+    def test_product_inventory_writes_to_product_outputs(self, _mock_which: object) -> None:
+        product_root = self.project_root / "products" / "pet_nail_trimmer"
+        assets_root = product_root / "assets"
+        output_dir = product_root / "outputs" / "material_inventory"
+        for bucket in PRODUCT_ASSET_BUCKETS:
+            (assets_root / bucket).mkdir(parents=True, exist_ok=True)
+        script_path = assets_root / "scripts" / "script.txt"
+        script_path.write_text("short product script", encoding="utf-8")
+
+        result = run_inventory(
+            project_root=self.project_root / "03_tk_video_agent",
+            input_root=assets_root,
+            output_dir=output_dir,
+            source_buckets=PRODUCT_ASSET_BUCKETS,
+            report_root=product_root,
+        )
+        item = result["inventory"]["files"][0]
+
+        self.assertEqual(result["json_path"], output_dir / "material_inventory.json")
+        self.assertEqual(result["markdown_path"], output_dir / "material_inventory.md")
+        self.assertEqual(result["inventory"]["input_root"], "assets")
+        self.assertEqual(item["relative_path"], "assets/scripts/script.txt")
+        self.assertEqual(item["source_bucket"], "scripts")
+        self.assertEqual(item["material_type"], "document")
 
 
 if __name__ == "__main__":

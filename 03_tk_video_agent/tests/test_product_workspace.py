@@ -12,6 +12,8 @@ from helpers.product_workspace import (
     PUBLISH_DIRS,
     create_product_workspace,
     existing_global_flow_paths,
+    repo_root_from_agent_root,
+    require_product_workspace,
     resolve_product_workspace,
 )
 
@@ -56,6 +58,17 @@ class ProductWorkspaceTests(unittest.TestCase):
         workspace = create_product_workspace(self.repo_root, "dog_bath_hose")
 
         self.assertTrue(workspace.root.exists())
+
+    def test_repo_root_resolves_from_agent_root(self) -> None:
+        agent_root = self.repo_root / "03_tk_video_agent"
+
+        self.assertEqual(repo_root_from_agent_root(agent_root), self.repo_root)
+
+    def test_missing_product_workspace_fails_clearly(self) -> None:
+        with self.assertRaises(FileNotFoundError) as error:
+            require_product_workspace(self.repo_root, "missing_product")
+
+        self.assertIn("Product workspace not found: products/missing_product", str(error.exception))
 
 
 if __name__ == "__main__":

@@ -9,7 +9,8 @@ from helpers.batch_variants import run_batch_variants
 from helpers.build_material_pack import run_material_pack
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
-from helpers.inventory import run_inventory
+from helpers.inventory import PRODUCT_ASSET_BUCKETS, run_inventory
+from helpers.product_workspace import repo_root_from_agent_root, require_product_workspace
 from helpers.render import run_render
 from helpers.subtitle_overlay import run_subtitles
 
@@ -17,7 +18,8 @@ from helpers.subtitle_overlay import run_subtitles
 def main() -> None:
     parser = argparse.ArgumentParser(description="TikTok product video agent utilities.")
     subparsers = parser.add_subparsers(dest="command")
-    subparsers.add_parser("inventory", help="Scan local input materials and write inventory reports.")
+    inventory_parser = subparsers.add_parser("inventory", help="Scan local input materials and write inventory reports.")
+    inventory_parser.add_argument("--product", help="Optional product slug for product-scoped inventory.")
     subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
     subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
@@ -29,7 +31,23 @@ def main() -> None:
     project_root = Path(__file__).resolve().parent
 
     if args.command == "inventory":
-        result = run_inventory(project_root)
+        try:
+            if args.product:
+                repo_root = repo_root_from_agent_root(project_root)
+                workspace = require_product_workspace(repo_root, args.product)
+                result = run_inventory(
+                    project_root=project_root,
+                    input_root=workspace.assets,
+                    output_dir=workspace.outputs / "material_inventory",
+                    source_buckets=PRODUCT_ASSET_BUCKETS,
+                    report_root=workspace.root,
+                )
+            else:
+                result = run_inventory(project_root)
+        except FileNotFoundError as exc:
+            print(f"Inventory failed: {exc}")
+            raise SystemExit(1) from exc
+
         inventory = result["inventory"]
         print(f"Material inventory generated: {inventory['file_count']} files")
         print(f"JSON: {result['json_path']}")

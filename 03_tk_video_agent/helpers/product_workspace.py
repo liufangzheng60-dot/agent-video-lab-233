@@ -42,6 +42,11 @@ class ProductWorkspace:
     publish: Path
 
 
+def repo_root_from_agent_root(agent_root: Path | str) -> Path:
+    """Resolve repository root from the 03_tk_video_agent directory."""
+    return Path(agent_root).resolve().parent
+
+
 def resolve_product_workspace(repo_root: Path | str, product_slug: str) -> ProductWorkspace:
     """Resolve product workspace paths without creating files."""
     root = Path(repo_root) / "products" / product_slug
@@ -53,6 +58,16 @@ def resolve_product_workspace(repo_root: Path | str, product_slug: str) -> Produ
         outputs=root / "outputs",
         publish=root / "publish",
     )
+
+
+def require_product_workspace(repo_root: Path | str, product_slug: str) -> ProductWorkspace:
+    """Resolve an existing product workspace or raise a clear error."""
+    workspace = resolve_product_workspace(repo_root, product_slug)
+    if not workspace.root.exists():
+        raise FileNotFoundError(f"Product workspace not found: products/{product_slug}")
+    if not workspace.assets.exists():
+        raise FileNotFoundError(f"Product assets directory not found: products/{product_slug}/assets")
+    return workspace
 
 
 def create_product_workspace(repo_root: Path | str, product_slug: str) -> ProductWorkspace:

@@ -23,40 +23,55 @@ SOURCE_BUCKETS = (
     "reference_videos",
 )
 
+PRODUCT_ASSET_BUCKETS = (
+    "product_images",
+    "raw_videos",
+    "ai_generated_clips",
+    "reference_videos",
+    "scripts",
+)
+
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".webp", ".gif", ".bmp", ".tiff"}
 VIDEO_EXTENSIONS = {".mp4", ".mov", ".mkv", ".avi", ".webm", ".m4v"}
 AUDIO_EXTENSIONS = {".mp3", ".wav", ".m4a", ".aac", ".flac", ".ogg"}
 DOCUMENT_EXTENSIONS = {".md", ".txt", ".pdf", ".doc", ".docx", ".csv", ".json", ".yaml", ".yml"}
 
 
-def run_inventory(project_root: Path | str | None = None) -> dict[str, Any]:
-    """Scan default input buckets and write inventory reports."""
+def run_inventory(
+    project_root: Path | str | None = None,
+    input_root: Path | str | None = None,
+    output_dir: Path | str | None = None,
+    source_buckets: tuple[str, ...] = SOURCE_BUCKETS,
+    report_root: Path | str | None = None,
+) -> dict[str, Any]:
+    """Scan local input buckets and write inventory reports."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
-    input_root = root / "inputs"
-    output_dir = root / "outputs" / "material_inventory"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    scan_root = Path(input_root) if input_root is not None else root / "inputs"
+    destination = Path(output_dir) if output_dir is not None else root / "outputs" / "material_inventory"
+    relative_root = Path(report_root) if report_root is not None else root
+    destination.mkdir(parents=True, exist_ok=True)
 
     ffprobe_path = which("ffprobe")
     generated_at = datetime.now(timezone.utc).isoformat()
-    files = _scan_files(root, input_root, ffprobe_path)
+    files = _scan_files(relative_root, scan_root, ffprobe_path, source_buckets)
 
     inventory = {
         "generated_at": generated_at,
-        "input_root": str(input_root.relative_to(root)),
+        "input_root": _safe_relative(scan_root, relative_root),
         "file_count": len(files),
         "files": files,
     }
 
-    json_path = output_dir / "material_inventory.json"
-    markdown_path = output_dir / "material_inventory.md"
+    json_path = destination / "material_inventory.json"
+    markdown_path = destination / "material_inventory.md"
     json_path.write_text(json.dumps(inventory, ensure_ascii=False, indent=2), encoding="utf-8")
     markdown_path.write_text(_render_markdown(inventory), encoding="utf-8")
     return {"inventory": inventory, "json_path": json_path, "markdown_path": markdown_path}
 
 
-def _scan_files(root: Path, input_root: Path, ffprobe_path: str | None) -> list[dict[str, Any]]:
+def _scan_files(root: Path, input_root: Path, ffprobe_path: str | None, source_buckets: tuple[str, ...]) -> list[dict[str, Any]]:
     items: list[dict[str, Any]] = []
-    for bucket in SOURCE_BUCKETS:
+    for bucket in source_buckets:
         bucket_dir = input_root / bucket
         if not bucket_dir.exists():
             continue
@@ -89,7 +104,7 @@ def _build_file_record(root: Path, path: Path, source_bucket: str, ffprobe_path:
 
     return {
         "file_name": path.name,
-        "relative_path": str(path.relative_to(root)).replace("\\", "/"),
+        "relative_path": _safe_relative(path, root),
         "material_type": material_type,
         "extension": path.suffix.lower(),
         "file_size_bytes": path.stat().st_size,
@@ -188,7 +203,7 @@ def _render_markdown(inventory: dict[str, Any]) -> str:
     lines.extend(["", "## 素材明细表", ""])
 
     if not files:
-        lines.append("当前没有素材。请将图片、视频、AI 生成片段、产品 brief 或参考视频放入 `inputs/` 对应目录。")
+        lines.append("当前没有素材。请将图片、视频、AI 生成片段、产品 brief 或参考视频放入对应目录。")
     else:
         lines.extend(
             [
@@ -249,3 +264,10 @@ def _render_counts(counts: dict[str, int]) -> list[str]:
     if not counts:
         return ["- 当前没有素材。"]
     return [f"- `{key}`: {value}" for key, value in sorted(counts.items())]
+
+
+def _safe_relative(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
