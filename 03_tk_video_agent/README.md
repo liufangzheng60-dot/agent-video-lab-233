@@ -84,6 +84,24 @@ python main.py material-pack
 - `outputs/material_pack/material_pack.json`
 - `outputs/material_pack/material_pack.md`
 
+Product-scoped material pack is also supported:
+
+```bash
+python main.py material-pack --product pet_nail_trimmer
+```
+
+This reads:
+
+- `../products/pet_nail_trimmer/outputs/material_inventory/material_inventory.json`
+- `../products/pet_nail_trimmer/product_brief.md`
+- `../products/pet_nail_trimmer/assets/scripts/*.txt`
+- `../products/pet_nail_trimmer/assets/scripts/*.md`
+
+And writes:
+
+- `../products/pet_nail_trimmer/outputs/material_pack/material_pack.json`
+- `../products/pet_nail_trimmer/outputs/material_pack/material_pack.md`
+
 第一版只做本地素材包整理：读取素材盘点和产品 brief，为素材分配 `suggested_role`，并添加基础风险提示。不做 AI 视觉理解、转录、剪辑、渲染或外部 API 调用。
 
 ## 剪辑策略生成
@@ -290,12 +308,12 @@ Current product-aware command:
 
 ```bash
 python main.py inventory --product pet_nail_trimmer
+python main.py material-pack --product pet_nail_trimmer
 ```
 
 Future product-aware command target:
 
 ```bash
-python main.py material-pack --product pet_nail_trimmer
 python main.py edit-strategy --product pet_nail_trimmer
 python main.py timeline --product pet_nail_trimmer
 python main.py render --product pet_nail_trimmer

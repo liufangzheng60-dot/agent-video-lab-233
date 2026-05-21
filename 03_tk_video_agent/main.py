@@ -20,7 +20,8 @@ def main() -> None:
     subparsers = parser.add_subparsers(dest="command")
     inventory_parser = subparsers.add_parser("inventory", help="Scan local input materials and write inventory reports.")
     inventory_parser.add_argument("--product", help="Optional product slug for product-scoped inventory.")
-    subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
+    material_pack_parser = subparsers.add_parser("material-pack", help="Build an Agent-readable material pack from inventory outputs.")
+    material_pack_parser.add_argument("--product", help="Optional product slug for product-scoped material pack.")
     subparsers.add_parser("edit-strategy", help="Generate a TikTok product video edit strategy from a material pack.")
     subparsers.add_parser("timeline", help="Generate timeline JSON and CapCut CSV from edit strategy outputs.")
     subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
@@ -55,7 +56,23 @@ def main() -> None:
         return
 
     if args.command == "material-pack":
-        result = run_material_pack(project_root)
+        try:
+            if args.product:
+                repo_root = repo_root_from_agent_root(project_root)
+                workspace = require_product_workspace(repo_root, args.product)
+                result = run_material_pack(
+                    project_root=project_root,
+                    inventory_path=workspace.outputs / "material_inventory" / "material_inventory.json",
+                    brief_sources=[workspace.product_brief, workspace.assets / "scripts"],
+                    output_dir=workspace.outputs / "material_pack",
+                    report_root=workspace.root,
+                )
+            else:
+                result = run_material_pack(project_root)
+        except FileNotFoundError as exc:
+            print(f"Material pack failed: {exc}")
+            raise SystemExit(1) from exc
+
         material_pack = result["material_pack"]
         print(f"Material pack generated: {material_pack['material_count']} materials")
         print(f"JSON: {result['json_path']}")

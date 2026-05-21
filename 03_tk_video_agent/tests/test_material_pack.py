@@ -111,6 +111,64 @@ class MaterialPackTests(unittest.TestCase):
 
         self.assertEqual(result["material_pack"]["inventory_source"], "outputs/material_inventory/material_inventory.json")
 
+    def test_legacy_material_pack_output_path_remains_default(self) -> None:
+        self.write_inventory()
+
+        result = run_material_pack(self.project_root)
+
+        self.assertEqual(result["json_path"], self.project_root / "outputs" / "material_pack" / "material_pack.json")
+        self.assertEqual(result["markdown_path"], self.project_root / "outputs" / "material_pack" / "material_pack.md")
+
+    def test_product_material_pack_writes_to_product_outputs_and_reads_sources(self) -> None:
+        product_root = self.project_root / "products" / "pet_nail_trimmer"
+        inventory_dir = product_root / "outputs" / "material_inventory"
+        output_dir = product_root / "outputs" / "material_pack"
+        scripts_dir = product_root / "assets" / "scripts"
+        inventory_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir.mkdir(parents=True, exist_ok=True)
+        inventory = {
+            "generated_at": "2026-05-21T00:00:00+00:00",
+            "input_root": "assets",
+            "file_count": 1,
+            "files": [
+                {
+                    "file_name": "script.txt",
+                    "relative_path": "assets/scripts/script.txt",
+                    "material_type": "document",
+                    "extension": ".txt",
+                    "file_size_bytes": 10,
+                    "source_bucket": "scripts",
+                    "duration_seconds": None,
+                    "width": None,
+                    "height": None,
+                    "has_audio": None,
+                    "risk_flags": [],
+                    "notes": [],
+                }
+            ],
+        }
+        inventory_path = inventory_dir / "material_inventory.json"
+        inventory_path.write_text(json.dumps(inventory), encoding="utf-8")
+        (product_root / "product_brief.md").write_text("# Pet Nail Trimmer\nLED grooming angle", encoding="utf-8")
+        (scripts_dir / "script.txt").write_text("Clip, smooth, done.", encoding="utf-8")
+
+        result = run_material_pack(
+            project_root=self.project_root / "03_tk_video_agent",
+            inventory_path=inventory_path,
+            brief_sources=[product_root / "product_brief.md", scripts_dir],
+            output_dir=output_dir,
+            report_root=product_root,
+        )
+        brief_paths = [brief["relative_path"] for brief in result["material_pack"]["product_briefs"]]
+        material = result["material_pack"]["materials"][0]
+
+        self.assertEqual(result["json_path"], output_dir / "material_pack.json")
+        self.assertEqual(result["markdown_path"], output_dir / "material_pack.md")
+        self.assertEqual(result["material_pack"]["inventory_source"], "outputs/material_inventory/material_inventory.json")
+        self.assertIn("product_brief.md", brief_paths)
+        self.assertIn("assets/scripts/script.txt", brief_paths)
+        self.assertEqual(material["suggested_role"], "product_brief_or_script")
+
 
 if __name__ == "__main__":
     unittest.main()

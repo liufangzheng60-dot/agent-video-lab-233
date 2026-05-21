@@ -12,6 +12,7 @@ ROLE_BY_BUCKET = {
     "raw_videos": "demo_or_source_clip",
     "product_images": "product_reference_image",
     "product_briefs": "product_brief_or_script",
+    "scripts": "product_brief_or_script",
     "reference_videos": "reference_clip",
     "ai_generated_clips": "ai_generated_clip",
 }
@@ -22,23 +23,30 @@ NINE_BY_SIXTEEN = 9 / 16
 ASPECT_RATIO_TOLERANCE = 0.05
 
 
-def run_material_pack(project_root: Path | str | None = None) -> dict[str, Any]:
+def run_material_pack(
+    project_root: Path | str | None = None,
+    inventory_path: Path | str | None = None,
+    brief_sources: list[Path | str] | None = None,
+    output_dir: Path | str | None = None,
+    report_root: Path | str | None = None,
+) -> dict[str, Any]:
     """Read inventory and product briefs, then write material pack reports."""
     root = Path(project_root) if project_root is not None else Path(__file__).resolve().parents[1]
-    inventory_path = root / "outputs" / "material_inventory" / "material_inventory.json"
-    brief_dir = root / "inputs" / "product_briefs"
-    output_dir = root / "outputs" / "material_pack"
-    output_dir.mkdir(parents=True, exist_ok=True)
+    source_inventory_path = Path(inventory_path) if inventory_path is not None else root / "outputs" / "material_inventory" / "material_inventory.json"
+    sources = [Path(source) for source in brief_sources] if brief_sources is not None else [root / "inputs" / "product_briefs"]
+    destination = Path(output_dir) if output_dir is not None else root / "outputs" / "material_pack"
+    relative_root = Path(report_root) if report_root is not None else root
+    destination.mkdir(parents=True, exist_ok=True)
 
-    inventory = _read_inventory(inventory_path)
-    product_briefs = _read_product_briefs(root, brief_dir)
+    inventory = _read_inventory(source_inventory_path)
+    product_briefs = _read_product_briefs(relative_root, sources)
     materials = [_build_material(item) for item in inventory.get("files", [])]
-    missing_materials = _find_missing_materials(materials)
+    missing_materials = _find_missing_materials(materials, product_briefs)
     risk_flags = _collect_risk_flags(materials, missing_materials)
 
     material_pack = {
         "generated_at": datetime.now(timezone.utc).isoformat(),
-        "inventory_source": inventory_path.relative_to(root).as_posix(),
+        "inventory_source": _safe_relative(source_inventory_path, relative_root),
         "inventory_generated_at": inventory.get("generated_at"),
         "material_count": len(materials),
         "product_briefs": product_briefs,
@@ -47,8 +55,8 @@ def run_material_pack(project_root: Path | str | None = None) -> dict[str, Any]:
         "risk_flags": risk_flags,
     }
 
-    json_path = output_dir / "material_pack.json"
-    markdown_path = output_dir / "material_pack.md"
+    json_path = destination / "material_pack.json"
+    markdown_path = destination / "material_pack.md"
     json_path.write_text(json.dumps(material_pack, ensure_ascii=False, indent=2), encoding="utf-8")
     markdown_path.write_text(_render_markdown(material_pack), encoding="utf-8")
     return {"material_pack": material_pack, "json_path": json_path, "markdown_path": markdown_path}
@@ -60,17 +68,26 @@ def _read_inventory(inventory_path: Path) -> dict[str, Any]:
     return json.loads(inventory_path.read_text(encoding="utf-8"))
 
 
-def _read_product_briefs(root: Path, brief_dir: Path) -> list[dict[str, Any]]:
-    if not brief_dir.exists():
-        return []
-
+def _read_product_briefs(root: Path, brief_sources: list[Path]) -> list[dict[str, Any]]:
     briefs: list[dict[str, Any]] = []
-    for path in sorted(p for p in brief_dir.rglob("*") if p.is_file() and p.suffix.lower() in BRIEF_EXTENSIONS):
+    paths: list[Path] = []
+    for source in brief_sources:
+        if source.is_file() and source.suffix.lower() in BRIEF_EXTENSIONS:
+            paths.append(source)
+        elif source.is_dir():
+            paths.extend(p for p in source.rglob("*") if p.is_file() and p.suffix.lower() in BRIEF_EXTENSIONS)
+
+    seen: set[Path] = set()
+    for path in sorted(paths):
+        resolved = path.resolve()
+        if resolved in seen:
+            continue
+        seen.add(resolved)
         content = path.read_text(encoding="utf-8", errors="replace")
         briefs.append(
             {
                 "file_name": path.name,
-                "relative_path": str(path.relative_to(root)).replace("\\", "/"),
+                "relative_path": _safe_relative(path, root),
                 "extension": path.suffix.lower(),
                 "content": content,
                 "summary": _summarize_text(content),
@@ -115,9 +132,17 @@ def _add_video_risks(material: dict[str, Any]) -> None:
         material["notes"].append(f"Video aspect ratio is {width}:{height}, not close to 9:16.")
 
 
-def _find_missing_materials(materials: list[dict[str, Any]]) -> list[str]:
+def _find_missing_materials(materials: list[dict[str, Any]], product_briefs: list[dict[str, Any]]) -> list[str]:
     present_buckets = {item["source_bucket"] for item in materials}
-    return [bucket for bucket in REQUIRED_BUCKETS if bucket not in present_buckets]
+    missing: list[str] = []
+    for bucket in REQUIRED_BUCKETS:
+        if bucket == "product_briefs":
+            has_brief_source = bool(product_briefs) or "scripts" in present_buckets
+            if not has_brief_source and bucket not in present_buckets:
+                missing.append(bucket)
+        elif bucket not in present_buckets:
+            missing.append(bucket)
+    return missing
 
 
 def _collect_risk_flags(materials: list[dict[str, Any]], missing_materials: list[str]) -> list[str]:
@@ -225,4 +250,11 @@ def _render_overview(materials: list[dict[str, Any]]) -> list[str]:
         bucket = item["source_bucket"]
         counts[bucket] = counts.get(bucket, 0) + 1
     return [f"- `{bucket}`: {count}" for bucket, count in sorted(counts.items())]
+
+
+def _safe_relative(path: Path, root: Path) -> str:
+    try:
+        return path.relative_to(root).as_posix()
+    except ValueError:
+        return path.as_posix()
 
