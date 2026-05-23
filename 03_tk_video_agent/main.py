@@ -8,6 +8,7 @@ from pathlib import Path
 from helpers.batch_variants import run_batch_variants
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
+from helpers.firewall import run_firewall_check
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
 from helpers.inventory import PRODUCT_ASSET_BUCKETS, run_inventory
@@ -35,6 +36,10 @@ def main() -> None:
     experiment_parser.add_argument("--product", required=True, help="Product slug for experiment isolation.")
     experiment_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation.")
     experiment_parser.add_argument("--batch", required=True, help="Batch ID, for example batch_20260520_v002_v006.")
+    firewall_parser = subparsers.add_parser("firewall-check", help="Run standalone path firewall preflight checks.")
+    firewall_parser.add_argument("--product", required=True, help="Product slug for path isolation checks.")
+    firewall_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation checks.")
+    firewall_parser.add_argument("--batch", required=True, help="Batch ID for experiment isolation checks.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -186,6 +191,16 @@ def main() -> None:
         print(f"Experiment templates generated: {result['batch_dir']}")
         for path in result["files"].values():
             print(f"- {path}")
+        return
+
+    if args.command == "firewall-check":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_firewall_check(repo_root, args.product, args.sku, args.batch)
+        print(f"Firewall check status: {result['status']}")
+        if result["preflight_report"]:
+            print(f"Preflight report: {result['preflight_report']}")
+        if result["violation_report"]:
+            print(f"Violation report: {result['violation_report']}")
         return
 
     parser.print_help()
