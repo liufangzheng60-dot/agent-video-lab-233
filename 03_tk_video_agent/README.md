@@ -63,7 +63,7 @@ This scans `../products/pet_nail_trimmer/assets/` and writes:
 - `../products/pet_nail_trimmer/outputs/material_inventory/material_inventory.json`
 - `../products/pet_nail_trimmer/outputs/material_inventory/material_inventory.md`
 
-Only `inventory` supports `--product` in the current minimal vertical slice. Other commands still use the original global `inputs/` and `outputs/` flow.
+Current product-scoped commands include `inventory`, `material-pack`, `edit-strategy`, and `timeline`. Product-scoped `render` is in validation and writes a clear report when product-level source video is missing.
 
 ## 素材包生成
 
@@ -324,6 +324,79 @@ Future generated batch outputs must include a concrete `YYYYMMDD` date stamp in 
 
 This makes publishing, feedback, and audit records easier to connect to the exact batch date.
 
+## Experiment Racing Templates
+
+Run:
+
+```bash
+python main.py experiment-init --product pet_nail_trimmer --sku default_sku --batch batch_20260520_v002_v006
+```
+
+This creates manual-fill templates under:
+
+```text
+../experiments/product_slug/sku_slug/batch_YYYYMMDD_vXXX_vYYY/
+```
+
+Example:
+
+```text
+../experiments/pet_nail_trimmer/default_sku/batch_20260520_v002_v006/
+├── 00_batch_brief.md
+├── 01_variants.csv
+├── 02_performance_log.csv
+├── 03_racing_decision.md
+└── 04_next_iteration.md
+```
+
+Use these files to manually record each A/B test batch, compare variants, choose winners and losers, and plan the next iteration. Missing or unavailable data should be entered as `NA`. This command does not generate videos, publish to TikTok, call external APIs, or install dependencies.
+
+## New SKU Test Entry: dog_bath_hose / blue
+
+The next product-level test workspace is:
+
+```text
+../products/dog_bath_hose/
+```
+
+SKU:
+
+```text
+blue
+```
+
+Place source material here:
+
+- `../products/dog_bath_hose/assets/raw_videos/`
+- `../products/dog_bath_hose/assets/product_images/`
+- `../products/dog_bath_hose/assets/scripts/`
+- `../products/dog_bath_hose/assets/ai_generated_clips/`
+- `../products/dog_bath_hose/assets/reference_videos/`
+
+The first manual A/B testing batch is:
+
+```text
+../experiments/dog_bath_hose/blue/batch_20260520_v001_v005/
+```
+
+Use this batch to record v001-v005 variants, manual publish status, performance checkpoints, racing decisions, and the next iteration plan. Do not mix this product-level test with the old global demo baseline.
+
+## Control Console And Scenario Keyword Mining
+
+The workspace now includes governance and research templates for multi-model, multi-product, multi-SKU work:
+
+```text
+../control_console/
+../project_journal/
+../scenario_keyword_mining/
+```
+
+Use `control_console/` for master decisions, role contracts, data firewall policy, module registry, do-not-touch rules, and next action queue. This area is read-only by default unless the user explicitly approves a control update.
+
+Use `project_journal/` for build logs, decisions, errors, and changelog notes.
+
+Use `scenario_keyword_mining/` to mine scene words, pain words, emotion triggers, Hook hypotheses, demo logic, and differentiated selling points. Do not copy reference video captions, original music, original footage, creator identity, or distinctive expression.
+
 ## Product-Level Workspace Structure
 
 The project now supports a product-level workspace pattern while keeping the original global `inputs/` and `outputs/` flow compatible.
@@ -354,13 +427,18 @@ Example product workspace:
 
 Future command target:
 
-Current product-aware command:
+Current product-aware commands:
 
 ```bash
 python main.py inventory --product pet_nail_trimmer
 python main.py material-pack --product pet_nail_trimmer
 python main.py edit-strategy --product pet_nail_trimmer
 python main.py timeline --product pet_nail_trimmer
+```
+
+Product-aware render validation:
+
+```bash
 python main.py render --product pet_nail_trimmer
 ```
 

@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-21T13:58:35.412009+00:00",
+  "generated_at": "2026-05-22T13:37:31.065944+00:00",
   "source_material_pack": "outputs/material_pack/material_pack.json",
   "video_goal": "Create a 7-15 second TikTok product short that turns the product brief and available source materials into a clear hook, problem, demo, proof, and CTA flow.",
   "target_duration_seconds": {
@@ -22,10 +22,8 @@
       "target_duration": "2-4s",
       "recommended_material_role": "demo_or_source_clip",
       "caption_direction": "Pet nail trims are stressful and expensive.",
-      "execution_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming.",
-      "available_materials": [
-        "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4"
-      ]
+      "execution_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming. Missing role: demo_or_source_clip.",
+      "available_materials": []
     },
     {
       "segment_name": "demo",
@@ -33,10 +31,8 @@
       "target_duration": "4-9s",
       "recommended_material_role": "demo_or_source_clip",
       "caption_direction": "LED light helps you see the quick before cutting.",
-      "execution_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work.",
-      "available_materials": [
-        "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4"
-      ]
+      "execution_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work. Missing role: demo_or_source_clip.",
+      "available_materials": []
     },
     {
       "segment_name": "proof",
@@ -57,25 +53,15 @@
       "available_materials": []
     }
   ],
-  "material_usage": [
-    {
-      "relative_path": "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4",
-      "source_bucket": "raw_videos",
-      "material_type": "video",
-      "suggested_role": "demo_or_source_clip",
-      "recommended_use": "Use for problem, demo, and motion context. Crop or rebuild to vertical if aspect ratio risk exists.",
-      "risk_flags": [
-        "aspect_ratio_not_9_16"
-      ]
-    }
-  ],
+  "material_usage": [],
   "risk_flags": [
-    "missing_product_images",
-    "aspect_ratio_not_9_16",
-    "needs_9_16_crop_or_rebuild"
+    "missing_raw_videos",
+    "missing_product_images"
   ],
   "missing_materials": [
+    "raw_videos",
     "product_images",
+    "missing_role_demo_or_source_clip",
     "missing_role_product_brief_or_script",
     "missing_role_product_reference_image"
   ],

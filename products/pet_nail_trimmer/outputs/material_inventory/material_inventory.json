@@ -1,6 +1,21 @@
 {
-  "generated_at": "2026-05-21T12:15:57.095850+00:00",
+  "generated_at": "2026-05-21T13:58:34.939255+00:00",
   "input_root": "assets",
-  "file_count": 0,
-  "files": []
+  "file_count": 1,
+  "files": [
+    {
+      "file_name": "462a80716c45b93a3449f6c007244ebb.mp4",
+      "relative_path": "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 7550728,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 38.566667,
+      "width": 720,
+      "height": 960,
+      "has_audio": true,
+      "risk_flags": [],
+      "notes": []
+    }
+  ]
 }

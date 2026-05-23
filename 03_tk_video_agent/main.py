@@ -7,6 +7,7 @@ from pathlib import Path
 
 from helpers.batch_variants import run_batch_variants
 from helpers.build_material_pack import run_material_pack
+from helpers.experiment_racing import run_experiment_init
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
 from helpers.inventory import PRODUCT_ASSET_BUCKETS, run_inventory
@@ -30,6 +31,10 @@ def main() -> None:
     render_parser.add_argument("--product", help="Optional product slug for product-scoped render.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
     subparsers.add_parser("batch-variants", help="Generate v002-v006 subtitle-burned A/B test videos.")
+    experiment_parser = subparsers.add_parser("experiment-init", help="Create manual A/B experiment templates.")
+    experiment_parser.add_argument("--product", required=True, help="Product slug for experiment isolation.")
+    experiment_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation.")
+    experiment_parser.add_argument("--batch", required=True, help="Batch ID, for example batch_20260520_v002_v006.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -173,6 +178,14 @@ def main() -> None:
         print(f"Feedback template: {result['feedback_path']}")
         for item in result["results"]:
             print(f"{item['version']} {item['key']}: {item['status']} - {item['output_path']}")
+        return
+
+    if args.command == "experiment-init":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_experiment_init(repo_root, args.product, args.sku, args.batch)
+        print(f"Experiment templates generated: {result['batch_dir']}")
+        for path in result["files"].values():
+            print(f"- {path}")
         return
 
     parser.print_help()

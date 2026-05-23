@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-05-21T12:22:06.972027+00:00",
+  "generated_at": "2026-05-21T13:58:35.213326+00:00",
   "inventory_source": "outputs/material_inventory/material_inventory.json",
-  "inventory_generated_at": "2026-05-21T12:15:57.095850+00:00",
-  "material_count": 0,
+  "inventory_generated_at": "2026-05-21T13:58:34.939255+00:00",
+  "material_count": 1,
   "product_briefs": [
     {
       "file_name": "product_brief.md",
@@ -12,13 +12,32 @@
       "summary": "﻿# Pet Nail Trimmer Product-level workspace example for the current MVP product. ## Purpose This folder is reserved for product-specific source material, outputs, publish records, and performance feedback. The existing global `03_tk_video_agent/inputs/` and `03_tk_video_agent/outputs/` flow remains compatible for now. Future commands can add `--product pet_nail_trimmer` and write into this product workspace."
     }
   ],
-  "materials": [],
+  "materials": [
+    {
+      "file_name": "462a80716c45b93a3449f6c007244ebb.mp4",
+      "relative_path": "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 7550728,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 38.566667,
+      "width": 720,
+      "height": 960,
+      "has_audio": true,
+      "suggested_role": "demo_or_source_clip",
+      "risk_flags": [
+        "aspect_ratio_not_9_16"
+      ],
+      "notes": [
+        "Video aspect ratio is 720:960, not close to 9:16."
+      ]
+    }
+  ],
   "missing_materials": [
-    "raw_videos",
     "product_images"
   ],
   "risk_flags": [
-    "missing_raw_videos",
-    "missing_product_images"
+    "missing_product_images",
+    "aspect_ratio_not_9_16"
   ]
 }

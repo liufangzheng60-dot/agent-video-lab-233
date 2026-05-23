@@ -1,0 +1,92 @@
+modules:
+  - name: inventory
+    purpose: scan local product or demo source materials
+    inputs:
+      - products/{product_slug}/assets/
+      - 03_tk_video_agent/inputs/
+    outputs:
+      - products/{product_slug}/outputs/material_inventory/
+      - 03_tk_video_agent/outputs/material_inventory/
+    writable_dirs:
+      - products/{product_slug}/outputs/material_inventory/
+      - 03_tk_video_agent/outputs/material_inventory/
+    forbidden_dirs:
+      - control_console/
+      - 00_references/
+
+  - name: material_pack
+    purpose: convert inventory and briefs into agent-readable material packs
+    inputs:
+      - products/{product_slug}/outputs/material_inventory/
+      - products/{product_slug}/product_brief.md
+      - products/{product_slug}/assets/scripts/
+    outputs:
+      - products/{product_slug}/outputs/material_pack/
+    writable_dirs:
+      - products/{product_slug}/outputs/material_pack/
+    forbidden_dirs:
+      - products/{other_product_slug}/
+      - control_console/
+
+  - name: edit_strategy
+    purpose: generate hook-problem-demo-proof-cta strategy
+    inputs:
+      - products/{product_slug}/outputs/material_pack/
+    outputs:
+      - products/{product_slug}/outputs/edit_strategy/
+    writable_dirs:
+      - products/{product_slug}/outputs/edit_strategy/
+    forbidden_dirs:
+      - products/{other_product_slug}/
+      - control_console/
+
+  - name: timeline
+    purpose: generate timeline JSON and CapCut CSV
+    inputs:
+      - products/{product_slug}/outputs/edit_strategy/
+      - products/{product_slug}/outputs/material_pack/
+    outputs:
+      - products/{product_slug}/outputs/timelines/
+    writable_dirs:
+      - products/{product_slug}/outputs/timelines/
+    forbidden_dirs:
+      - products/{other_product_slug}/
+      - control_console/
+
+  - name: render
+    purpose: create minimal review video using local ffmpeg when approved
+    inputs:
+      - products/{product_slug}/outputs/timelines/
+      - products/{product_slug}/assets/raw_videos/
+    outputs:
+      - products/{product_slug}/outputs/renders/
+    writable_dirs:
+      - products/{product_slug}/outputs/renders/
+    forbidden_dirs:
+      - products/{other_product_slug}/
+      - control_console/
+
+  - name: experiment_racing
+    purpose: create manual A/B testing templates
+    inputs:
+      - user approved product, sku, and batch identifiers
+    outputs:
+      - experiments/{product_slug}/{sku_slug}/{batch_id}/
+    writable_dirs:
+      - experiments/{product_slug}/{sku_slug}/{batch_id}/
+    forbidden_dirs:
+      - experiments/{other_product_slug}/
+      - control_console/
+
+  - name: scenario_keyword_mining
+    purpose: mine scene words, pain words, emotions, hook hypotheses, and demo logic
+    inputs:
+      - approved reference observations
+      - product brief
+    outputs:
+      - scenario_keyword_mining/
+    writable_dirs:
+      - scenario_keyword_mining/
+    forbidden_dirs:
+      - products/{product_slug}/assets/
+      - control_console/

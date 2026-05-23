@@ -1,12 +1,12 @@
 # Material Pack
 
-- 生成时间: `2026-05-21T12:22:06.972027+00:00`
-- 素材总数: `0`
+- 生成时间: `2026-05-21T13:58:35.213326+00:00`
+- 素材总数: `1`
 - Inventory 来源: `outputs/material_inventory/material_inventory.json`
 
 ## 素材总览
 
-- 当前没有素材。
+- `raw_videos`: 1
 
 ## 产品 brief 摘要
 
@@ -15,16 +15,17 @@
 
 ## 素材角色表
 
-当前没有素材可分配角色。
+| File | Bucket | Type | Role | Duration | Resolution | Risks |
+| --- | --- | --- | --- | ---: | --- | --- |
+| assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4 | raw_videos | video | demo_or_source_clip | 38.566667 | 720x960 | aspect_ratio_not_9_16 |
 
 ## 风险提示
 
-- `missing_raw_videos`
 - `missing_product_images`
+- `aspect_ratio_not_9_16`
 
 ## 缺失素材提示
 
-- 缺少 `raw_videos` 素材。
 - 缺少 `product_images` 素材。
 
 ## 下一步建议

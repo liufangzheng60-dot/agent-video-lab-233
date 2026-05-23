@@ -1,0 +1,24 @@
+{
+  "generated_at": "2026-05-22T13:37:30.864041+00:00",
+  "inventory_source": "outputs/material_inventory/material_inventory.json",
+  "inventory_generated_at": "2026-05-22T13:37:30.647991+00:00",
+  "material_count": 0,
+  "product_briefs": [
+    {
+      "file_name": "product_brief.md",
+      "relative_path": "product_brief.md",
+      "extension": ".md",
+      "content": "# Dog Bath Hose - Blue SKU\n\n## Status\n\nPlaceholder brief for the new `dog_bath_hose / blue` SKU test.\n\n## User Action Required\n\nPlease place the detailed product description, script notes, selling points, and test angles as `.txt` or `.md` files under:\n\n```text\nproducts/dog_bath_hose/assets/scripts/\n```\n\nRecommended script files:\n\n- `product_brief.txt`\n- `hook_ideas.txt`\n- `caption_notes.txt`\n\n## Current Scope\n\n- Product slug: `dog_bath_hose`\n- SKU slug: `blue`\n- First experiment batch: `batch_20260520_v001_v005`\n- This workspace is for product-level production, not the old global demo flow.\n\n## Notes\n\n- Put raw videos in `assets/raw_videos/`.\n- Put product images in `assets/product_images/`.\n- Put AI generated clips in `assets/ai_generated_clips/`.\n- Put reference videos in `assets/reference_videos/`.\n",
+      "summary": "# Dog Bath Hose - Blue SKU ## Status Placeholder brief for the new `dog_bath_hose / blue` SKU test. ## User Action Required Please place the detailed product description, script notes, selling points, and test angles as `.txt` or `.md` files under: ```text products/dog_bath_hose/assets/scripts/ ``` Recommended script files: - `product_brief.txt` - `hook_ideas.txt` - `caption_notes.txt` ## Current Scope - Product slug: `dog_bath_hose` - SKU slug: `blue` - First experiment batch: `batch_2026052..."
+    }
+  ],
+  "materials": [],
+  "missing_materials": [
+    "raw_videos",
+    "product_images"
+  ],
+  "risk_flags": [
+    "missing_raw_videos",
+    "missing_product_images"
+  ]
+}

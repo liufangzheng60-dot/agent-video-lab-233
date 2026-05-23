@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-21T13:58:35.610249+00:00",
+  "generated_at": "2026-05-22T13:37:31.265870+00:00",
   "source_edit_strategy": "outputs/edit_strategy/edit_strategy.json",
   "source_material_pack": "outputs/material_pack/material_pack.json",
   "target_duration_seconds": 15.0,
@@ -21,13 +21,10 @@
       "duration": 2.0,
       "segment_name": "problem",
       "purpose": "Make the viewer recognize the grooming pain or cost problem.",
-      "source_material": "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4",
+      "source_material": "",
       "caption": "Pet nail trims are stressful and expensive.",
-      "editing_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming.",
-      "risk_flags": [
-        "aspect_ratio_not_9_16",
-        "needs_9_16_crop_or_rebuild"
-      ]
+      "editing_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming. Missing role: demo_or_source_clip.",
+      "risk_flags": []
     },
     {
       "start": 4.0,
@@ -35,13 +32,10 @@
       "duration": 5.0,
       "segment_name": "demo",
       "purpose": "Show the product mechanism or use case clearly.",
-      "source_material": "assets/raw_videos/462a80716c45b93a3449f6c007244ebb.mp4",
+      "source_material": "",
       "caption": "LED light helps you see the quick before cutting.",
-      "editing_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work.",
-      "risk_flags": [
-        "aspect_ratio_not_9_16",
-        "needs_9_16_crop_or_rebuild"
-      ]
+      "editing_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work. Missing role: demo_or_source_clip.",
+      "risk_flags": []
     },
     {
       "start": 9.0,
@@ -67,14 +61,15 @@
     }
   ],
   "missing_materials": [
+    "raw_videos",
     "product_images",
+    "missing_role_demo_or_source_clip",
     "missing_role_product_brief_or_script",
     "missing_role_product_reference_image"
   ],
   "risk_flags": [
-    "missing_product_images",
-    "aspect_ratio_not_9_16",
-    "needs_9_16_crop_or_rebuild"
+    "missing_raw_videos",
+    "missing_product_images"
   ],
   "notes": [
     "Timeline is for planning and manual CapCut recreation only.",
