@@ -397,6 +397,16 @@ Use `project_journal/` for build logs, decisions, errors, and changelog notes.
 
 Use `scenario_keyword_mining/` to mine scene words, pain words, emotion triggers, Hook hypotheses, demo logic, and differentiated selling points. Do not copy reference video captions, original music, original footage, creator identity, or distinctive expression.
 
+## Codex Report Compression
+
+The project folder is the source of truth. Complete reports should be stored in `project_journal/` or `tasks/`; chat responses should default to concise summaries.
+
+- Low-risk tasks: summary only.
+- Medium-risk tasks: summary plus Review Package path.
+- High-risk tasks: full report allowed.
+
+High-risk tasks include firewall integration into business flows, multi-model API integration, `control_console/` or core strategy changes, batch deletes or moves, major `products/` or `experiments/` structure changes, OpenAI/Claude/Seedance API connections, core render logic changes, and automatic TikTok publishing.
+
 ## Product-Level Workspace Structure
 
 The project now supports a product-level workspace pattern while keeping the original global `inputs/` and `outputs/` flow compatible.
