@@ -452,6 +452,44 @@ Product-aware render validation:
 python main.py render --product pet_nail_trimmer
 ```
 
+## dog_bath_hose Voiceover-Only Render Policy
+
+For `dog_bath_hose / blue`, product-level render follows a voiceover-only rule:
+
+- Source video background audio is muted.
+- Subtitles are not burned by default.
+- Voiceover audio is read from `../products/dog_bath_hose/assets/voiceovers/` when a `.mp3`, `.wav`, or `.m4a` file exists.
+- If voiceover exists, render writes `../products/dog_bath_hose/outputs/renders/final_voiceover_YYYYMMDD.mp4`.
+- If voiceover is missing, render writes only a muted visual preview and `voiceover_plan.md`; the muted preview is not treated as a final voiceover video.
+
+Relevant reports:
+
+```text
+../products/dog_bath_hose/outputs/renders/render_report.md
+../products/dog_bath_hose/outputs/reports/asset_readiness_report.md
+../products/dog_bath_hose/outputs/reports/voiceover_plan.md
+../products/dog_bath_hose/outputs/reports/business_pipeline_report.md
+```
+
+Manual voiceover planning files:
+
+```text
+../products/dog_bath_hose/outputs/reports/voiceover_script_20260524.md
+../products/dog_bath_hose/outputs/reports/voiceover_recording_guide.md
+```
+
+Record or externally generate the selected English voiceover, then place the `.mp3`, `.wav`, or `.m4a` file under:
+
+```text
+../products/dog_bath_hose/assets/voiceovers/
+```
+
+Recommended filename:
+
+```text
+dog_bath_hose_blue_voiceover_20260524_v001.mp3
+```
+
 Future product-aware command target:
 
 ```bash
