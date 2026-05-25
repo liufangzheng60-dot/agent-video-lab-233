@@ -351,6 +351,24 @@ Example:
 
 Use these files to manually record each A/B test batch, compare variants, choose winners and losers, and plan the next iteration. Missing or unavailable data should be entered as `NA`. This command does not generate videos, publish to TikTok, call external APIs, or install dependencies.
 
+## Experiment Record And Analysis
+
+Run:
+
+```bash
+python main.py experiment-record --product dog_bath_hose --sku blue --batch batch_20260524_expression_style --input manual_inputs/v003_12h_20260524.md
+```
+
+The user is responsible for manually filling raw TikTok backend data in a key:value markdown file under the batch `manual_inputs/` folder. The command updates `02_performance_log.csv` and writes an analysis report under `analysis/`.
+
+Rules:
+
+- Missing values remain `NA`.
+- No TikTok API or external API is called.
+- No backend data is scraped automatically.
+- The command may mark signals such as attention, retention, and completion, but it does not automatically declare a winner.
+- Final racing decisions must be reviewed by the user.
+
 ## New SKU Test Entry: dog_bath_hose / blue
 
 The next product-level test workspace is:
@@ -489,6 +507,27 @@ Recommended filename:
 ```text
 dog_bath_hose_blue_voiceover_20260524_v001.mp3
 ```
+
+## dog_bath_hose Expression Style Testing
+
+`dog_bath_hose / blue` can run controlled English voiceover expression tests where the only primary variable is `expression_style`.
+
+Allowed controlled expression styles include:
+
+- `baseline_direct`
+- `slang_lowbrow`
+- `profanity_bleeped_shock`
+- `chaos_pain`
+- `convenience_easy`
+
+Slang, lowbrow phrasing, and bleeped profanity are allowed only as isolated test variables. They must be clearly labeled with:
+
+- `profanity_level`
+- `platform_risk`
+- `bleep_required`
+- `first_principles_reason`
+
+High-risk shock variants must not be mixed with normal commercial versions or treated as default brand voice. The business purpose must be explicit, such as testing whether stronger emotional shock improves first-two-second retention while accepting that it may reduce trust, product clicks, or conversion.
 
 Future product-aware command target:
 

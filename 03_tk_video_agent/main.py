@@ -8,6 +8,7 @@ from pathlib import Path
 from helpers.batch_variants import run_batch_variants
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
+from helpers.experiment_record import run_experiment_record
 from helpers.firewall import run_firewall_check
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
@@ -36,6 +37,11 @@ def main() -> None:
     experiment_parser.add_argument("--product", required=True, help="Product slug for experiment isolation.")
     experiment_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation.")
     experiment_parser.add_argument("--batch", required=True, help="Batch ID, for example batch_20260520_v002_v006.")
+    experiment_record_parser = subparsers.add_parser("experiment-record", help="Record manual TikTok metrics and generate analysis.")
+    experiment_record_parser.add_argument("--product", required=True, help="Product slug for experiment isolation.")
+    experiment_record_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation.")
+    experiment_record_parser.add_argument("--batch", required=True, help="Batch ID for experiment isolation.")
+    experiment_record_parser.add_argument("--input", required=True, help="Manual input markdown path relative to the batch directory.")
     firewall_parser = subparsers.add_parser("firewall-check", help="Run standalone path firewall preflight checks.")
     firewall_parser.add_argument("--product", required=True, help="Product slug for path isolation checks.")
     firewall_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation checks.")
@@ -151,6 +157,8 @@ def main() -> None:
                     output_dir=workspace.outputs / "renders",
                     media_root=workspace.root,
                     report_root=workspace.root,
+                    voiceover_dir=workspace.assets / "voiceovers",
+                    report_dir=workspace.outputs / "reports",
                 )
             else:
                 result = run_render(project_root)
@@ -191,6 +199,18 @@ def main() -> None:
         print(f"Experiment templates generated: {result['batch_dir']}")
         for path in result["files"].values():
             print(f"- {path}")
+        return
+
+    if args.command == "experiment-record":
+        try:
+            repo_root = repo_root_from_agent_root(project_root)
+            result = run_experiment_record(repo_root, args.product, args.sku, args.batch, args.input)
+        except FileNotFoundError as exc:
+            print(f"Experiment record failed: {exc}")
+            raise SystemExit(1) from exc
+        print(f"Experiment record updated: {result['performance_log']}")
+        print(f"Analysis: {result['analysis_path']}")
+        print(f"Decision status: {result['analysis']['decision_status']}")
         return
 
     if args.command == "firewall-check":
