@@ -529,6 +529,15 @@ Slang, lowbrow phrasing, and bleeped profanity are allowed only as isolated test
 
 High-risk shock variants must not be mixed with normal commercial versions or treated as default brand voice. The business purpose must be explicit, such as testing whether stronger emotional shock improves first-two-second retention while accepting that it may reduce trust, product clicks, or conversion.
 
+Current follow-up planning:
+
+```text
+../products/dog_bath_hose/outputs/reports/v003_followup_plan_20260524.md
+../experiments/dog_bath_hose/blue/batch_20260524_v003_followup/
+```
+
+The v003 follow-up batch treats `v003_profanity_bleeped_shock` as an attention-positive signal, not a winner. It tests whether shorter demo handoff, visual-first proof, or a slang lowbrow control can improve retention while keeping product, CTA, source skeleton, no-subtitle policy, and muted source audio unchanged.
+
 Future product-aware command target:
 
 ```bash

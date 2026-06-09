@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-05-22T13:37:31.065944+00:00",
+  "generated_at": "2026-05-23T17:35:18.875149+00:00",
   "source_material_pack": "outputs/material_pack/material_pack.json",
   "video_goal": "Create a 7-15 second TikTok product short that turns the product brief and available source materials into a clear hook, problem, demo, proof, and CTA flow.",
   "target_duration_seconds": {
@@ -13,8 +13,10 @@
       "target_duration": "0-2s",
       "recommended_material_role": "product_brief_or_script",
       "caption_direction": "Stop paying $20+ for nail trims.",
-      "execution_note": "Use the strongest pain-point line from the product brief as opening text. Pair with the clearest product or demo visual available. Missing role: product_brief_or_script.",
-      "available_materials": []
+      "execution_note": "Use the strongest pain-point line from the product brief as opening text. Pair with the clearest product or demo visual available.",
+      "available_materials": [
+        "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt"
+      ]
     },
     {
       "segment_name": "problem",
@@ -22,8 +24,11 @@
       "target_duration": "2-4s",
       "recommended_material_role": "demo_or_source_clip",
       "caption_direction": "Pet nail trims are stressful and expensive.",
-      "execution_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming. Missing role: demo_or_source_clip.",
-      "available_materials": []
+      "execution_note": "Use source video moments that show pet handling, grooming setup, or the need for safer trimming.",
+      "available_materials": [
+        "assets/raw_videos/dog_bath_hose_shower_spray_001.mp4.mp4",
+        "assets/raw_videos/dog_bath_hose_shower_spray_002.mp4.mp4"
+      ]
     },
     {
       "segment_name": "demo",
@@ -31,8 +36,11 @@
       "target_duration": "4-9s",
       "recommended_material_role": "demo_or_source_clip",
       "caption_direction": "LED light helps you see the quick before cutting.",
-      "execution_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work. Missing role: demo_or_source_clip.",
-      "available_materials": []
+      "execution_note": "Prioritize close-up product operation. If using the 720x960 source clip, crop or rebuild to 9:16 before final timeline work.",
+      "available_materials": [
+        "assets/raw_videos/dog_bath_hose_shower_spray_001.mp4.mp4",
+        "assets/raw_videos/dog_bath_hose_shower_spray_002.mp4.mp4"
+      ]
     },
     {
       "segment_name": "proof",
@@ -40,8 +48,10 @@
       "target_duration": "9-12s",
       "recommended_material_role": "product_reference_image",
       "caption_direction": "Safer, easier, cheaper at home.",
-      "execution_note": "Use product image as a stable proof visual if no dedicated proof clip exists. Keep text short and benefit-led. Missing role: product_reference_image.",
-      "available_materials": []
+      "execution_note": "Use product image as a stable proof visual if no dedicated proof clip exists. Keep text short and benefit-led.",
+      "available_materials": [
+        "assets/product_images/dog_bath_hose_product_001.jpg.jpg"
+      ]
     },
     {
       "segment_name": "cta",
@@ -49,21 +59,55 @@
       "target_duration": "12-15s",
       "recommended_material_role": "product_brief_or_script",
       "caption_direction": "Grab yours below.",
-      "execution_note": "End with TikTok Shop-oriented CTA text. Do not publish automatically; this is only strategy output. Missing role: product_brief_or_script.",
-      "available_materials": []
+      "execution_note": "End with TikTok Shop-oriented CTA text. Do not publish automatically; this is only strategy output.",
+      "available_materials": [
+        "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt"
+      ]
     }
   ],
-  "material_usage": [],
-  "risk_flags": [
-    "missing_raw_videos",
-    "missing_product_images"
+  "material_usage": [
+    {
+      "relative_path": "assets/product_images/dog_bath_hose_product_001.jpg.jpg",
+      "source_bucket": "product_images",
+      "material_type": "image",
+      "suggested_role": "product_reference_image",
+      "recommended_use": "Use as product clarity or proof visual when video detail is insufficient.",
+      "risk_flags": []
+    },
+    {
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_001.mp4.mp4",
+      "source_bucket": "raw_videos",
+      "material_type": "video",
+      "suggested_role": "demo_or_source_clip",
+      "recommended_use": "Use for problem, demo, and motion context. Crop or rebuild to vertical if aspect ratio risk exists.",
+      "risk_flags": []
+    },
+    {
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_002.mp4.mp4",
+      "source_bucket": "raw_videos",
+      "material_type": "video",
+      "suggested_role": "demo_or_source_clip",
+      "recommended_use": "Use for problem, demo, and motion context. Crop or rebuild to vertical if aspect ratio risk exists.",
+      "risk_flags": []
+    },
+    {
+      "relative_path": "assets/reference_videos/reference_tiktok_style_001.mp4.mp4",
+      "source_bucket": "reference_videos",
+      "material_type": "video",
+      "suggested_role": "reference_clip",
+      "recommended_use": "Use only as style or pacing reference, not as final owned footage.",
+      "risk_flags": []
+    },
+    {
+      "relative_path": "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt",
+      "source_bucket": "scripts",
+      "material_type": "document",
+      "suggested_role": "product_brief_or_script",
+      "recommended_use": "Use for hook wording, captions, CTA, and message constraints.",
+      "risk_flags": []
+    }
   ],
-  "missing_materials": [
-    "raw_videos",
-    "product_images",
-    "missing_role_demo_or_source_clip",
-    "missing_role_product_brief_or_script",
-    "missing_role_product_reference_image"
-  ],
+  "risk_flags": [],
+  "missing_materials": [],
   "next_step": "Use this strategy to plan a structured timeline. Do not render or edit video in P0_003."
 }

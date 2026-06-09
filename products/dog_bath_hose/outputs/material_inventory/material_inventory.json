@@ -1,6 +1,77 @@
 {
-  "generated_at": "2026-05-22T13:37:30.647991+00:00",
+  "generated_at": "2026-05-23T17:35:02.897896+00:00",
   "input_root": "assets",
-  "file_count": 0,
-  "files": []
+  "file_count": 5,
+  "files": [
+    {
+      "file_name": "dog_bath_hose_product_001.jpg.jpg",
+      "relative_path": "assets/product_images/dog_bath_hose_product_001.jpg.jpg",
+      "material_type": "image",
+      "extension": ".jpg",
+      "file_size_bytes": 81830,
+      "source_bucket": "product_images",
+      "duration_seconds": null,
+      "width": null,
+      "height": null,
+      "has_audio": null,
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_shower_spray_001.mp4.mp4",
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_001.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 7218402,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 34.435011,
+      "width": 720,
+      "height": 1280,
+      "has_audio": true,
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_shower_spray_002.mp4.mp4",
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_002.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 3130246,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 15.487007,
+      "width": 720,
+      "height": 1280,
+      "has_audio": true,
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "reference_tiktok_style_001.mp4.mp4",
+      "relative_path": "assets/reference_videos/reference_tiktok_style_001.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 12462479,
+      "source_bucket": "reference_videos",
+      "duration_seconds": 84.666667,
+      "width": 576,
+      "height": 1024,
+      "has_audio": true,
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_blue_brief_001.txt.txt",
+      "relative_path": "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt",
+      "material_type": "document",
+      "extension": ".txt",
+      "file_size_bytes": 2599,
+      "source_bucket": "scripts",
+      "duration_seconds": null,
+      "width": null,
+      "height": null,
+      "has_audio": null,
+      "risk_flags": [],
+      "notes": []
+    }
+  ]
 }

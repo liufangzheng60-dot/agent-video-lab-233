@@ -1,9 +1,16 @@
 {
-  "generated_at": "2026-05-22T13:37:30.864041+00:00",
+  "generated_at": "2026-05-23T17:35:10.555025+00:00",
   "inventory_source": "outputs/material_inventory/material_inventory.json",
-  "inventory_generated_at": "2026-05-22T13:37:30.647991+00:00",
-  "material_count": 0,
+  "inventory_generated_at": "2026-05-23T17:35:02.897896+00:00",
+  "material_count": 5,
   "product_briefs": [
+    {
+      "file_name": "dog_bath_hose_blue_brief_001.txt.txt",
+      "relative_path": "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt",
+      "extension": ".txt",
+      "content": "Product Name:\nQuick-Release Dog Bath Hose\n\nSKU:\nblue\n\nTarget Customer:\nDog owners who wash pets at home, especially owners dealing with muddy paws, messy bath time, or dogs that dislike regular bathing.\n\nCore Pain Points:\n1. Washing dog paws after walks is messy.\n2. Bathroom or sink washing is inconvenient.\n3. Regular hoses or cups are slow and uncomfortable.\n4. Owners want a faster and cleaner way to rinse pets.\n\nCore Selling Points:\n1. Quick-release connector for easier setup.\n2. Flexible blue hose for pet washing.\n3. Showerhead helps rinse paws and fur more easily.\n4. Suitable for home pet bath scenes.\n5. Helps make bath time cleaner and faster.\n\nMain Video Goal:\nCreate a TikTok Shop product video that shows the product solving messy dog bath or paw washing problems.\n\nPreferred Hook Direction:\nMessy paws after a walk? Clean them faster at home.\n\nRequired Subtitle Language:\nEnglish only.\n\nCTA:\nMake pet bath time easier at home.\n\n--------------------------------------------------\nVIDEO SCRIPT\n--------------------------------------------------\nVideo Title: JoyPetSmart Quick-Release Bath Hose - The Ultimate Paw Hack\nVideo Duration: ~15 Seconds\nVibe: Fast-paced, problem-solving, satisfying (ASMR cleaning), and energetic.\nBGM: Upbeat, trending TikTok commercial audio.\n\n[0:00 - 0:03] The Hook\nVisual: Close-up of a dog with heavily muddy paws jumping into a clean white bathroom sink or tub, making a mess.\nSubtitle (Text on Screen): Messy paws after a walk? Clean them faster at home. 🐾\nVoiceover (AI TTS - Energetic Female): Messy paws after a walk? Clean them faster at home!\n\n[0:03 - 0:07] The Solution & Setup\nVisual: Quick, satisfying shot of a hand easily snapping the blue quick-release connector onto the faucet.\nSubtitle: The JoyPetSmart Quick-Release Hose 🚿\nVoiceover: Say goodbye to slow, messy cups. Just snap on the JoyPetSmart Quick-Release Hose! \n\n[0:07 - 0:11] The Satisfying Demo\nVisual: First-person view holding the showerhead. A gentle, concentrated stream of water instantly washes the thick mud off the dog's paw. The dog looks calm and comfortable.\nSubtitle: Melts mud away in seconds! ✨\nVoiceover: The gentle showerhead rinses away mud and dirt in seconds, keeping your pup calm and your bathroom clean. \n\n[0:11 - 0:15] The Call to Action (CTA)\nVisual: A sparkling clean, happy dog. The screen flashes a bright yellow highlight on the blue hose, with a bold red arrow pointing down toward the TikTok Shop cart icon.\nSubtitle: Make pet bath time easier at home. 👇\nVoiceover: Make pet bath time easier at home. Grab yours in the TikTok Shop today!\n",
+      "summary": "Product Name: Quick-Release Dog Bath Hose SKU: blue Target Customer: Dog owners who wash pets at home, especially owners dealing with muddy paws, messy bath time, or dogs that dislike regular bathing. Core Pain Points: 1. Washing dog paws after walks is messy. 2. Bathroom or sink washing is inconvenient. 3. Regular hoses or cups are slow and uncomfortable. 4. Owners want a faster and cleaner way to rinse pets. Core Selling Points: 1. Quick-release connector for easier setup. 2. Flexible blue ..."
+    },
     {
       "file_name": "product_brief.md",
       "relative_path": "product_brief.md",
@@ -12,13 +19,83 @@
       "summary": "# Dog Bath Hose - Blue SKU ## Status Placeholder brief for the new `dog_bath_hose / blue` SKU test. ## User Action Required Please place the detailed product description, script notes, selling points, and test angles as `.txt` or `.md` files under: ```text products/dog_bath_hose/assets/scripts/ ``` Recommended script files: - `product_brief.txt` - `hook_ideas.txt` - `caption_notes.txt` ## Current Scope - Product slug: `dog_bath_hose` - SKU slug: `blue` - First experiment batch: `batch_2026052..."
     }
   ],
-  "materials": [],
-  "missing_materials": [
-    "raw_videos",
-    "product_images"
+  "materials": [
+    {
+      "file_name": "dog_bath_hose_product_001.jpg.jpg",
+      "relative_path": "assets/product_images/dog_bath_hose_product_001.jpg.jpg",
+      "material_type": "image",
+      "extension": ".jpg",
+      "file_size_bytes": 81830,
+      "source_bucket": "product_images",
+      "duration_seconds": null,
+      "width": null,
+      "height": null,
+      "has_audio": null,
+      "suggested_role": "product_reference_image",
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_shower_spray_001.mp4.mp4",
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_001.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 7218402,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 34.435011,
+      "width": 720,
+      "height": 1280,
+      "has_audio": true,
+      "suggested_role": "demo_or_source_clip",
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_shower_spray_002.mp4.mp4",
+      "relative_path": "assets/raw_videos/dog_bath_hose_shower_spray_002.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 3130246,
+      "source_bucket": "raw_videos",
+      "duration_seconds": 15.487007,
+      "width": 720,
+      "height": 1280,
+      "has_audio": true,
+      "suggested_role": "demo_or_source_clip",
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "reference_tiktok_style_001.mp4.mp4",
+      "relative_path": "assets/reference_videos/reference_tiktok_style_001.mp4.mp4",
+      "material_type": "video",
+      "extension": ".mp4",
+      "file_size_bytes": 12462479,
+      "source_bucket": "reference_videos",
+      "duration_seconds": 84.666667,
+      "width": 576,
+      "height": 1024,
+      "has_audio": true,
+      "suggested_role": "reference_clip",
+      "risk_flags": [],
+      "notes": []
+    },
+    {
+      "file_name": "dog_bath_hose_blue_brief_001.txt.txt",
+      "relative_path": "assets/scripts/dog_bath_hose_blue_brief_001.txt.txt",
+      "material_type": "document",
+      "extension": ".txt",
+      "file_size_bytes": 2599,
+      "source_bucket": "scripts",
+      "duration_seconds": null,
+      "width": null,
+      "height": null,
+      "has_audio": null,
+      "suggested_role": "product_brief_or_script",
+      "risk_flags": [],
+      "notes": []
+    }
   ],
-  "risk_flags": [
-    "missing_raw_videos",
-    "missing_product_images"
-  ]
+  "missing_materials": [],
+  "risk_flags": []
 }

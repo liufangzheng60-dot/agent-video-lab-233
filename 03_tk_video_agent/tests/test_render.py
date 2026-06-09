@@ -8,7 +8,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-from helpers.render import parse_video_source_materials, read_timeline, run_render, write_render_report
+from helpers.render import build_ffmpeg_command, find_voiceover, parse_video_source_materials, read_timeline, run_render, write_render_report
 
 
 class RenderTests(unittest.TestCase):
@@ -78,7 +78,8 @@ class RenderTests(unittest.TestCase):
     def test_legacy_render_output_path_remains_default(self, _mock_which: object) -> None:
         result = run_render(self.project_root)
 
-        self.assertEqual(result["final_path"], self.project_root / "outputs" / "renders" / "final.mp4")
+        self.assertEqual(result["final_path"].parent, self.project_root / "outputs" / "renders")
+        self.assertTrue(result["final_path"].name.startswith("muted_visual_preview_"))
         self.assertEqual(result["report_path"], self.project_root / "outputs" / "renders" / "render_report.md")
 
     @patch("helpers.render.which", return_value=None)
@@ -110,11 +111,15 @@ class RenderTests(unittest.TestCase):
             report_root=product_root,
         )
 
-        self.assertEqual(result["final_path"], output_dir / "final.mp4")
+        self.assertEqual(result["final_path"].parent, output_dir)
+        self.assertTrue(result["final_path"].name.startswith("muted_visual_preview_"))
         self.assertEqual(result["report_path"], output_dir / "render_report.md")
         self.assertTrue(result["report_path"].exists())
         self.assertEqual(result["report"]["timeline_path"], "outputs/timelines/timeline.json")
-        self.assertEqual(result["report"]["output_path"], "outputs/renders/final.mp4")
+        self.assertTrue(result["report"]["output_path"].startswith("outputs/renders/muted_visual_preview_"))
+        self.assertTrue(result["report"]["source_audio_muted"])
+        self.assertFalse(result["report"]["subtitle_burned"])
+        self.assertEqual(result["report"]["voiceover_status"], "missing")
 
     def test_can_read_timeline_json(self) -> None:
         timeline = read_timeline(self.project_root / "outputs" / "timelines" / "timeline.json")
@@ -150,6 +155,28 @@ class RenderTests(unittest.TestCase):
         content = report_path.read_text(encoding="utf-8")
         self.assertIn("Render Report", content)
         self.assertIn("needs_9_16_crop_or_rebuild", content)
+
+    def test_build_ffmpeg_command_mutes_source_audio_without_voiceover(self) -> None:
+        command = build_ffmpeg_command("ffmpeg", Path("source.mp4"), Path("out.mp4"), 15.0)
+
+        self.assertIn("-an", command)
+        self.assertIn("0:v:0", command)
+        self.assertNotIn("0:a:0", command)
+
+    def test_build_ffmpeg_command_uses_voiceover_audio_only(self) -> None:
+        command = build_ffmpeg_command("ffmpeg", Path("source.mp4"), Path("out.mp4"), 15.0, Path("voice.mp3"))
+
+        self.assertIn("voice.mp3", command)
+        self.assertIn("0:v:0", command)
+        self.assertIn("1:a:0", command)
+        self.assertNotIn("-an", command)
+
+    def test_find_voiceover_detects_supported_audio(self) -> None:
+        voiceover_dir = self.project_root / "assets" / "voiceovers"
+        voiceover_dir.mkdir(parents=True, exist_ok=True)
+        (voiceover_dir / "voice.m4a").write_bytes(b"fake audio")
+
+        self.assertEqual(find_voiceover(voiceover_dir), voiceover_dir / "voice.m4a")
 
     def test_no_external_api_dependency(self) -> None:
         timeline = read_timeline(self.project_root / "outputs" / "timelines" / "timeline.json")
