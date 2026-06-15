@@ -1,0 +1,38 @@
+# Product Brief
+
+- product_name: dog stairs
+- sku_slug: khaki
+- product_positioning: Portable pet stairs for helping small, senior, or mobility-limited dogs reach couches, beds, or car seats with less jump strain.
+- target_user: US pet owners with small dogs, senior dogs, recovering dogs, or dogs with joint sensitivity who need safe elevation support at home or on the go.
+- main_pain_points:
+  - Dog cannot safely jump onto bed or sofa repeatedly.
+  - Repeated jumping may increase stress on hips, knees, or back.
+  - Owners want a cleaner, safer, lighter alternative than bulky furniture ramps.
+- core_selling_points:
+  - Step-by-step access reduces jump height burden.
+  - Lightweight and easy to move between rooms or car.
+  - Neutral khaki look fits home furniture better than bright pet gear.
+- usage_scenes:
+  - Bedroom bedside access
+  - Living room sofa access
+  - Car seat or trunk assist
+  - Temporary recovery support for dogs needing lower-impact movement
+- proof_points:
+  - Stable step structure
+  - Visual demonstration of dog climbing with low hesitation
+  - Compact footprint and home-use portability
+- forbidden_claims:
+  - Do not claim medical treatment or injury recovery.
+  - Do not claim guaranteed prevention of joint disease.
+  - Do not claim universal fit for every dog size or weight.
+- compliance_notes:
+  - Keep all claims observational and practical.
+  - Avoid veterinary, orthopedic, or rehabilitation promises.
+  - If load limits exist, show them only when confirmed by packaging or product specs.
+- voiceover_tone_options:
+  - practical helper
+  - caring pet parent
+  - calm home demo
+- reference_video_notes:
+  - Prioritize visual proof of easy climb, stability, and home fit.
+  - Avoid copying old dog_bath_hose hooks, winner logic, or emotional framing.

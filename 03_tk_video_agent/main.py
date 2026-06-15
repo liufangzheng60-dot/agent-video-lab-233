@@ -13,7 +13,9 @@ from helpers.firewall import run_firewall_check
 from helpers.generate_edit_strategy import run_edit_strategy
 from helpers.generate_timeline import run_timeline
 from helpers.inventory import PRODUCT_ASSET_BUCKETS, run_inventory
+from helpers.material_batch import run_material_batch
 from helpers.product_workspace import repo_root_from_agent_root, require_product_workspace
+from helpers.contact_sheet import run_contact_sheet
 from helpers.render import run_render
 from helpers.subtitle_overlay import run_subtitles
 
@@ -31,6 +33,14 @@ def main() -> None:
     timeline_parser.add_argument("--product", help="Optional product slug for product-scoped timeline.")
     render_parser = subparsers.add_parser("render", help="Render a minimal reviewable final.mp4 using ffmpeg.")
     render_parser.add_argument("--product", help="Optional product slug for product-scoped render.")
+    material_batch_parser = subparsers.add_parser("material-batch", help="Create clip manifest and tag template for one raw video batch.")
+    material_batch_parser.add_argument("--product", required=True, help="Product slug for product-scoped material batching.")
+    material_batch_parser.add_argument("--sku", required=True, help="SKU slug for stable clip IDs.")
+    material_batch_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260615_001.")
+    contact_sheet_parser = subparsers.add_parser("contact-sheet", help="Generate jpg contact sheets from an existing clip manifest.")
+    contact_sheet_parser.add_argument("--product", required=True, help="Product slug for product-scoped contact sheets.")
+    contact_sheet_parser.add_argument("--sku", required=True, help="SKU slug for report labeling.")
+    contact_sheet_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260615_001.")
     subparsers.add_parser("subtitles", help="Generate SRT subtitles and burn them into final.mp4.")
     subparsers.add_parser("batch-variants", help="Generate v002-v006 subtitle-burned A/B test videos.")
     experiment_parser = subparsers.add_parser("experiment-init", help="Create manual A/B experiment templates.")
@@ -171,6 +181,30 @@ def main() -> None:
         print(f"Final: {result['final_path']}")
         print(f"Report: {result['report_path']}")
         print(report["message"])
+        return
+
+    if args.command == "material-batch":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_material_batch(repo_root, args.product, args.sku, args.material_batch)
+        report = result["report"]
+        print(f"Material batch processed: {report['total_video_files']} clips")
+        print(f"Manifest CSV: {result['manifest_csv_path']}")
+        print(f"Manifest JSON: {result['manifest_json_path']}")
+        print(f"Tags template: {result['clip_tags_template_path']}")
+        print(f"Report: {result['report_path']}")
+        return
+
+    if args.command == "contact-sheet":
+        try:
+            repo_root = repo_root_from_agent_root(project_root)
+            result = run_contact_sheet(repo_root, args.product, args.sku, args.material_batch)
+        except FileNotFoundError as exc:
+            print(f"Contact sheet failed: {exc}")
+            raise SystemExit(1) from exc
+        report = result["report"]
+        print(f"Contact sheets generated: {report['generated_contact_sheets']}/{report['total_manifest_clips']}")
+        print(f"Contact sheet dir: {result['contact_sheets_dir']}")
+        print(f"Report: {result['report_path']}")
         return
 
     if args.command == "subtitles":

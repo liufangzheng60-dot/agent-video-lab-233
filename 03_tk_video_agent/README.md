@@ -548,3 +548,81 @@ python main.py batch-variants --product pet_nail_trimmer
 Current commands remain compatible without `--product`. No existing files were moved.
 
 Future matrix direction: multiple source materials -> keyframe extraction -> clip library -> multiple Hook timelines -> batch rendering -> performance feedback selects winner. The goal is compliant, differentiated, non-duplicate TikTok Shop product video variants, not algorithm evasion.
+
+## New Product Minimal Business Pipeline: dog_stairs_v1 / khaki
+
+This repository now also supports a fresh product workspace for `dog_stairs_v1 / khaki` under:
+
+```text
+../products/dog_stairs_v1/
+../experiments/dog_stairs_v1/khaki/batch_20260615_v001/
+```
+
+Standard material drop zones:
+
+- `../products/dog_stairs_v1/assets/raw_videos/`
+- `../products/dog_stairs_v1/assets/product_images/`
+- `../products/dog_stairs_v1/assets/scripts/`
+- `../products/dog_stairs_v1/assets/reference_videos/`
+- `../products/dog_stairs_v1/assets/voiceovers/`
+
+When raw video material exists, run:
+
+```bash
+python main.py inventory --product dog_stairs_v1
+python main.py material-pack --product dog_stairs_v1
+python main.py edit-strategy --product dog_stairs_v1
+python main.py timeline --product dog_stairs_v1
+python main.py render --product dog_stairs_v1
+```
+
+Business rule:
+
+- Do not auto-publish TikTok.
+- Do not auto-judge winner.
+- Source background audio stays muted.
+- Subtitles are not burned by default.
+- If a `.mp3`, `.wav`, or `.m4a` exists under `../products/dog_stairs_v1/assets/voiceovers/`, render may output `final_voiceover_YYYYMMDD.mp4`.
+- If voiceover is missing, render should output only `muted_visual_preview_YYYYMMDD.mp4` and keep `voiceover_plan.md`.
+- If raw video is missing, stop before render and use `asset_readiness_report.md` to tell the operator what material is still missing.
+
+## Material Batch Contact Sheet Minimal
+
+This project also supports a raw video batch intake flow for product workspaces.
+
+Run:
+
+```bash
+python main.py material-batch --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+python main.py contact-sheet --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+```
+
+Input folder:
+
+```text
+../products/dog_stairs_v1/assets/raw_videos/batch_20260615_001/
+```
+
+Output folder:
+
+```text
+../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/
+```
+
+`material-batch` rules:
+
+- Keeps original filenames unchanged.
+- Ignores `.gitkeep` and non-video files.
+- Scans only the top level of the selected batch folder.
+- Creates the input folder automatically if it does not exist.
+- Writes `clip_manifest.csv`, `clip_manifest.json`, `clip_tags_template.csv`, and `batch_asset_report.md`.
+- Computes stable `clip_id` values from sorted filenames.
+- Computes `checksum_sha256` for every clip.
+- Uses local `ffprobe` metadata when available, otherwise writes `NA` without crashing.
+
+`contact-sheet` rules:
+
+- Reads `clip_manifest.csv` and writes one `{clip_id}_contact_sheet.jpg` per clip under `contact_sheets/`.
+- Uses local `ffmpeg` only.
+- If `ffmpeg` is missing or fails, it writes `contact_sheet_report.md` without crashing the project.
+- No external API, AI, automatic editing, or render pipeline is triggered by these commands.
