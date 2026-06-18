@@ -1301,3 +1301,27 @@ scripts/smoke_test_laptop.ps1
 ```
 
 P12A does not implement the runtime agent. It documents hard rules, general rules, redundant-rule candidates, VLM QC boundaries, `agent_state`, Owner Firewall, Git hygiene, and laptop setup.
+
+## P12B Agent Factory Runtime Harness
+
+P12B adds a dry-run Runtime Agent skeleton, Owner Firewall skeleton, VLM QC sidecar skeleton, Git Safety Guard, and Media Asset Guard.
+
+Preflight:
+
+```bash
+python main.py agent-preflight --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --variants 12
+```
+
+Dry-run state machine:
+
+```bash
+python main.py agent-produce-review-pack-dry-run --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --variants 12
+```
+
+Owner Firewall dry-run:
+
+```bash
+python main.py owner-firewall --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --decision-file owner_firewall_decisions.template.json --dry-run
+```
+
+P12B writes reports under `../products/<product>/outputs/agent_factory/<material_batch>/`. It does not render MP4 files, call Gemini, generate TTS, delete raw videos, modify timelines, publish, or add media to Git.

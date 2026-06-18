@@ -1,0 +1,61 @@
+"""P12 runtime agent state model and JSON helpers."""
+
+from __future__ import annotations
+
+import json
+from dataclasses import asdict, dataclass, field
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+def utc_now_iso() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+@dataclass
+class AgentState:
+    """Serializable state for the P12 Agent Factory runtime harness."""
+
+    product: str
+    sku: str
+    material_batch: str
+    variants_requested: int
+    current_stage: str = "draft"
+    stage_status: dict[str, str] = field(default_factory=dict)
+    hard_rule_results: dict[str, Any] = field(default_factory=dict)
+    media_asset_guard_results: dict[str, Any] = field(default_factory=dict)
+    vlm_qc_results: dict[str, Any] = field(default_factory=dict)
+    owner_firewall_status: dict[str, Any] = field(default_factory=lambda: {"status": "not_started"})
+    output_paths: dict[str, str] = field(default_factory=dict)
+    failed_variants: list[str] = field(default_factory=list)
+    rerun_history: list[dict[str, Any]] = field(default_factory=list)
+    final_review_pack_path: str | None = None
+    created_at: str = field(default_factory=utc_now_iso)
+    updated_at: str = field(default_factory=utc_now_iso)
+
+    def mark_stage(self, stage: str, status: str) -> None:
+        self.current_stage = stage
+        self.stage_status[stage] = status
+        self.touch()
+
+    def touch(self) -> None:
+        self.updated_at = utc_now_iso()
+
+    def to_dict(self) -> dict[str, Any]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, payload: dict[str, Any]) -> "AgentState":
+        return cls(**payload)
+
+    def write_json(self, path: Path | str) -> Path:
+        output_path = Path(path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        return output_path
+
+
+def load_agent_state(path: Path | str) -> AgentState:
+    payload = json.loads(Path(path).read_text(encoding="utf-8"))
+    return AgentState.from_dict(payload)

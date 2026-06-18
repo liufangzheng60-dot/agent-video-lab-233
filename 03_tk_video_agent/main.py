@@ -6,6 +6,7 @@ import argparse
 from pathlib import Path
 
 from helpers.batch_variants import run_batch_variants
+from helpers.agent_factory_harness import run_agent_preflight, run_agent_produce_review_pack_dry_run
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
 from helpers.experiment_record import run_experiment_record
@@ -16,6 +17,7 @@ from helpers.inventory import PRODUCT_ASSET_BUCKETS, run_inventory
 from helpers.material_batch import run_material_batch
 from helpers.product_workspace import repo_root_from_agent_root, require_product_workspace
 from helpers.contact_sheet import run_contact_sheet
+from helpers.owner_firewall import run_owner_firewall
 from helpers.render import run_render
 from helpers.subtitle_overlay import run_subtitles
 
@@ -56,6 +58,25 @@ def main() -> None:
     firewall_parser.add_argument("--product", required=True, help="Product slug for path isolation checks.")
     firewall_parser.add_argument("--sku", required=True, help="SKU slug for experiment isolation checks.")
     firewall_parser.add_argument("--batch", required=True, help="Batch ID for experiment isolation checks.")
+    agent_preflight_parser = subparsers.add_parser("agent-preflight", help="Run P12 Agent Factory preflight without generating videos.")
+    agent_preflight_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    agent_preflight_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    agent_preflight_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    agent_preflight_parser.add_argument("--variants", required=True, type=int, help="Requested variant count.")
+    agent_dry_run_parser = subparsers.add_parser(
+        "agent-produce-review-pack-dry-run",
+        help="Simulate the P12 Agent Factory state machine without rendering, TTS, or VLM calls.",
+    )
+    agent_dry_run_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    agent_dry_run_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    agent_dry_run_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    agent_dry_run_parser.add_argument("--variants", required=True, type=int, help="Requested variant count.")
+    owner_firewall_parser = subparsers.add_parser("owner-firewall", help="Validate Owner Firewall decisions in dry-run mode.")
+    owner_firewall_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    owner_firewall_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    owner_firewall_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    owner_firewall_parser.add_argument("--decision-file", required=True, help="Owner decision JSON path or filename in the agent output dir.")
+    owner_firewall_parser.add_argument("--dry-run", action="store_true", help="Required for P12B; no destructive action is allowed.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -255,6 +276,49 @@ def main() -> None:
             print(f"Preflight report: {result['preflight_report']}")
         if result["violation_report"]:
             print(f"Violation report: {result['violation_report']}")
+        return
+
+    if args.command == "agent-preflight":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_agent_preflight(repo_root, args.product, args.sku, args.material_batch, args.variants)
+        print(f"Agent preflight status: {result['git_report']['status']}")
+        print(f"Output dir: {result['output_dir']}")
+        print(f"Raw videos exist: {result['media_report']['raw_videos_exists']}")
+        print(f"Raw video count: {result['media_report']['raw_video_count']}")
+        print("No videos were generated.")
+        return
+
+    if args.command == "agent-produce-review-pack-dry-run":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_agent_produce_review_pack_dry_run(repo_root, args.product, args.sku, args.material_batch, args.variants)
+        print("Agent review pack dry-run complete.")
+        print(f"Output dir: {result['output_dir']}")
+        print(f"Variants planned: {len(result['variant_ids'])}")
+        print("No render, TTS, VLM provider call, deletion, or publishing action was executed.")
+        return
+
+    if args.command == "owner-firewall":
+        if not args.dry_run:
+            print("Owner firewall failed: P12B only allows --dry-run.")
+            raise SystemExit(1)
+        repo_root = repo_root_from_agent_root(project_root)
+        output_dir = repo_root / "products" / args.product / "outputs" / "agent_factory" / args.material_batch
+        decision_path = Path(args.decision_file)
+        if not decision_path.is_absolute():
+            local_decision = output_dir / decision_path
+            decision_path = local_decision if local_decision.exists() else Path(args.decision_file)
+        result = run_owner_firewall(
+            decision_file=decision_path,
+            audit_log_path=output_dir / "owner_firewall_audit_log.md",
+            result_path=output_dir / "owner_firewall_result.json",
+            product=args.product,
+            sku=args.sku,
+            material_batch=args.material_batch,
+            dry_run=args.dry_run,
+        )
+        print(f"Owner firewall dry-run status: {result['status']}")
+        print(f"Audit log: {output_dir / 'owner_firewall_audit_log.md'}")
+        print(f"Result: {output_dir / 'owner_firewall_result.json'}")
         return
 
     parser.print_help()
