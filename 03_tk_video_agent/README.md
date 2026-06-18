@@ -626,3 +626,678 @@ Output folder:
 - Uses local `ffmpeg` only.
 - If `ffmpeg` is missing or fails, it writes `contact_sheet_report.md` without crashing the project.
 - No external API, AI, automatic editing, or render pipeline is triggered by these commands.
+
+## Folder-as-Tag Review Init
+
+Run:
+
+```bash
+python main.py tag-review-init --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+```
+
+This creates:
+
+```text
+../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/tag_review/
+```
+
+Inside `tag_review/`, the system creates fixed manual review folders such as `dog_climbs_steps`, `paw_grip_closeup`, `bad_clip`, and `duplicate_clip`, plus `README_TAG_REVIEW.md`.
+
+Manual rule:
+
+- Copy only `contact_sheets/*.jpg` into the matching tag folders.
+- Do not move raw source files from `assets/raw_videos/`.
+- Do not put video files inside `tag_review/`.
+- Later parsing will recover `clip_id` from jpg filenames only.
+
+Generate `clip_tags.csv` from folder placement:
+
+```bash
+python main.py tag-from-folders --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+```
+
+This reads:
+
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_manifest.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/tag_review/<scene_tag>/*.jpg`
+
+And writes:
+
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_tags.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/folder_tagging_report.md`
+
+Rules:
+
+- `clip_id` is parsed from `{clip_id}_contact_sheet.jpg`.
+- Multiple tag folders for the same `clip_id` create a conflict and leave that row untagged.
+- Clips absent from all tag folders keep empty `scene_tag` and `manual_notes=untagged`.
+- If any video file is mistakenly placed inside `tag_review/`, the report records a warning without moving or deleting that file.
+
+## Script Pack Inspect
+
+Run:
+
+```bash
+python main.py script-pack-inspect --product dog_stairs_v1 --script-file script_pack.xlsx
+```
+
+This performs a read-only workbook inspection for:
+
+```text
+../products/dog_stairs_v1/assets/scripts/script_pack.xlsx
+```
+
+Outputs:
+
+```text
+../products/dog_stairs_v1/outputs/script_pack/script_pack_inspection_report.md
+../products/dog_stairs_v1/outputs/script_pack/script_pack_inspection.json
+```
+
+Scope:
+
+- Checks whether the workbook file exists.
+- Reads workbook sheet names when `openpyxl` is available.
+- Records each sheet's `max_row`, `max_column`, and a 1-3 row preview.
+- Does not modify the xlsx file.
+- If `openpyxl` is missing, writes a clear `missing_dependency_openpyxl` inspection error instead of crashing.
+
+## Script Pack Parse By Index
+
+Run:
+
+```bash
+python main.py script-pack-parse --product dog_stairs_v1 --script-file script_pack.xlsx
+```
+
+This parses the same workbook by fixed sheet index, not by Chinese sheet names or Chinese header text.
+
+Sheet index map:
+
+- `0`: `strategy_review`
+- `1`: `script_overview`
+- `2`: `full_timeline`
+- `3`: `material_shot_list`
+- `4`: `voiceover_subtitle_pack`
+- `5`: `test_board`
+- `6`: `forbidden_terms`
+- `7`: `sources_rules`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/script_pack/sheet_map.json`
+- `../products/dog_stairs_v1/outputs/script_pack/timeline_segments.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/shot_requirements.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/voiceover_lines.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/subtitle_lines.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/forbidden_claims.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/script_pack_parse_report.md`
+- `../products/dog_stairs_v1/outputs/script_pack/script_pack_parse.json`
+
+Scope:
+
+- Does not modify the xlsx file.
+- Does not generate timeline output for editing or rendering.
+- Rows with unrecognized time ranges are preserved with `parse_status=needs_review`.
+- CSV outputs use UTF-8-SIG for Windows/WPS/Excel compatibility.
+
+## Shot Match Dry Run
+
+Run:
+
+```bash
+python main.py shot-match --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+```
+
+This creates a dry-run matching plan from parsed script CSVs and manually tagged material clips. It does not render video and does not modify raw media.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/script_pack/timeline_segments.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/shot_requirements.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/voiceover_lines.csv`
+- `../products/dog_stairs_v1/outputs/script_pack/subtitle_lines.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_manifest.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_tags.csv`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/shot_match/shot_match_plan.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/edit_decision_list.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/shot_match_report.md`
+- `../products/dog_stairs_v1/outputs/shot_match/shot_match_summary.json`
+
+Matching behavior:
+
+- Uses `shot_requirements.csv` first, then falls back to `timeline_segments.csv`.
+- Excludes untagged clips, `quality_score <= 1`, and `bad_clip` risk flags.
+- Allows clip reuse but marks `reused_clip` in warnings.
+- Reports low proof material pool as `proof_pool_low`.
+
+## Shot Match V002
+
+Run:
+
+```bash
+python main.py shot-match-v002 --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --rules products/dog_stairs_v1/outputs/creative_strategy/v002/shot_match_rules_v002.json
+```
+
+This regenerates the shot match plan using the frozen v002 creative rules. It does not render video and does not create MP4 files.
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/shot_match/v002/shot_match_plan_v002.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/v002/edit_decision_list_v002.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/v002/shot_match_report_v002.md`
+- `../products/dog_stairs_v1/outputs/shot_match/v002/shot_match_summary_v002.json`
+
+V002 behavior:
+
+- Limits per-script clip reuse according to `max_clip_reuse_per_script`.
+- Penalizes `avoid_high_reuse_clip_ids`, including the v001 overused C002 clip.
+- Prioritizes `dog_hesitates_jump`, `dog_climbs_steps`, and `paw_grip_closeup` in the first 3 seconds.
+- Blocks `product_static_detail` and `living_room_aesthetic` from the first 3 seconds.
+
+## Render Preflight Dry Run
+
+Run:
+
+```bash
+python main.py render-preflight --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001
+```
+
+This validates the shot-match EDL before actual rendering. It writes a render plan only and does not create mp4 files.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/shot_match/edit_decision_list.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/shot_match_plan.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_manifest.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_tags.csv`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/render_preflight/render_plan.csv`
+- `../products/dog_stairs_v1/outputs/render_preflight/render_plan.json`
+- `../products/dog_stairs_v1/outputs/render_preflight/render_preflight_report.md`
+- `../products/dog_stairs_v1/outputs/render_preflight/render_preflight_summary.json`
+
+Checks:
+
+- Source files exist and stay under the raw video batch folder.
+- Clip start/end times are valid and clamped to manifest duration when needed.
+- Short clips, high clip reuse, low proof pool, and ffmpeg availability are reported.
+- Next-stage render strategy is recorded as 9:16, 1080x1920, center crop with scale-and-pad fallback.
+
+## Render Preflight V002
+
+Run:
+
+```bash
+python main.py render-preflight-v002 --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v002
+```
+
+This validates the v002 shot-match EDL before actual rendering. It writes a v002 render plan only and does not create MP4 files.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/shot_match/v002/edit_decision_list_v002.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/v002/shot_match_plan_v002.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_manifest.csv`
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_tags.csv`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/render_preflight/v002/render_plan_v002.csv`
+- `../products/dog_stairs_v1/outputs/render_preflight/v002/render_plan_v002.json`
+- `../products/dog_stairs_v1/outputs/render_preflight/v002/render_preflight_report_v002.md`
+- `../products/dog_stairs_v1/outputs/render_preflight/v002/render_preflight_summary_v002.json`
+
+V002 checks:
+
+- Confirms C002 reuse remains zero.
+- Confirms V1 first 3 seconds do not use static product or pure home aesthetic scene tags.
+- Enforces max per-script clip reuse reporting against the v002 limit.
+- Records render strategy as mp4, 1080x1920, center crop, scale-and-pad fallback, muted original audio, and SRT-first subtitles.
+
+## Actual Render V001
+
+Run:
+
+```bash
+python main.py actual-render --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v001
+```
+
+This renders the first script ID from `render_plan.csv` into a muted rough-cut MP4. It does not call APIs, does not synthesize TTS, does not upload, and does not modify raw media.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/render_preflight/render_plan.csv`
+- `../products/dog_stairs_v1/outputs/render_preflight/render_plan.json`
+- `../products/dog_stairs_v1/outputs/shot_match/edit_decision_list.csv`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/dog_stairs_v1_khaki_batch_20260615_001_v001.mp4`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/dog_stairs_v1_khaki_batch_20260615_001_v001.srt`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/actual_render_report.md`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/actual_render_summary.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/ffmpeg_command.txt`
+
+Render behavior:
+
+- Selects only the first script ID in `render_plan.csv` when multiple script IDs exist.
+- Transcodes each segment to 1080x1920, muted, then concatenates the segments.
+- Tries `center_crop` first and falls back to `scale_and_pad` if rendering fails.
+- Generates an external UTF-8-SIG SRT file from `burned_subtitle` or `voiceover_text`; subtitles are not burned in this step.
+
+## Render Review Pack
+
+Run:
+
+```bash
+python main.py render-review-pack --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v001
+```
+
+This creates a human review pack from an existing rendered MP4. It does not render a new MP4 and does not modify the original video.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/dog_stairs_v1_khaki_batch_20260615_001_v001.mp4`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/dog_stairs_v1_khaki_batch_20260615_001_v001.srt`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/review_frames/`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/review_contact_sheet.jpg`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/render_review_checklist.md`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/render_review_summary.json`
+
+Review behavior:
+
+- Reads duration, resolution, and fps with ffprobe.
+- Extracts roughly one frame per second into `review_frames/`.
+- Builds a JPG contact sheet for quick human review.
+- Counts SRT subtitle entries and writes a manual scoring checklist.
+
+## Creative Asset Diagnosis
+
+Run:
+
+```bash
+python main.py creative-diagnose-assets --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v001
+```
+
+This records human review scores and diagnoses whether the current asset pool can support the next creative iteration. It does not run shot matching, does not render, and does not create new MP4 files.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/material_batches/batch_20260615_001/clip_tags.csv`
+- `../products/dog_stairs_v1/outputs/shot_match/shot_match_plan.csv`
+- `../products/dog_stairs_v1/outputs/render_preflight/render_preflight_summary.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/actual_render_summary.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/render_review_summary.json`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/human_review_scores_v001.json`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/asset_capability_diagnosis.json`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/asset_capability_diagnosis.md`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/creative_diagnosis_inputs.json`
+
+Diagnosis scope:
+
+- Summarizes clip tags, candidate counts, scene tag distribution, and risk flags.
+- Summarizes shot matching reuse, high reuse clip IDs, and segment roles.
+- Converts human review scores into operational flags such as `hook_weak`, `crop_ok`, `repetition_risk`, and `proof_pool_low`.
+- Missing optional summary files are reported as warnings instead of stopping the diagnosis.
+
+## Creative Strategy V002
+
+Run:
+
+```bash
+python main.py creative-strategy-v002 --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --from-variant v001 --to-variant v002
+```
+
+This converts the v001 diagnosis into a cuttable v002 script strategy and shot-match rules. It does not run shot matching, does not render, and does not create MP4 files.
+
+Inputs:
+
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/asset_capability_diagnosis.json`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/creative_diagnosis_inputs.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v001/review_pack/human_review_scores_v001.json`
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/cuttable_script_strategy_v002.json`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/cuttable_script_strategy_v002.md`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/shot_match_rules_v002.json`
+- `../products/dog_stairs_v1/outputs/creative_strategy/v002/creative_strategy_report.md`
+
+Strategy rules:
+
+- Weak hook shifts the first 3 seconds toward `dog_hesitates_jump`, `dog_climbs_steps`, and close-up action.
+- Crop remains `center_crop` when the diagnosis says crop is acceptable.
+- Repetition risk limits per-script clip reuse and avoids high-reuse clips.
+- Low proof pool allows proof reuse while listing next shooting priorities.
+
+## Context Assets
+
+Long-term project and product context now lives outside transient task reports.
+
+- Global entrypoint: `../context_assets/SKILL.md`
+- dog_stairs_v1 product entrypoint: `../products/dog_stairs_v1/strategy/SKILL.md`
+
+For complex project or product tasks, read these context files before inferring business strategy from short prompts.
+
+## Actual Render V002
+
+Run:
+
+```bash
+python main.py actual-render-v002 --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v002
+```
+
+This renders the first script_id from the v002 render preflight plan into a muted 1080x1920 MP4. It reads `render_plan_v002.csv`, writes an SRT first, and does not burn subtitles or synthesize TTS.
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/dog_stairs_v1_khaki_batch_20260615_001_v002.mp4`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/dog_stairs_v1_khaki_batch_20260615_001_v002.srt`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/actual_render_report_v002.md`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/actual_render_summary_v002.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/ffmpeg_command_v002.txt`
+
+## Render Review Pack V002
+
+Run:
+
+```bash
+python main.py render-review-pack-v002 --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --variant v002
+```
+
+This creates a review pack from the existing v002 MP4. It extracts frames, builds a review contact sheet, counts SRT subtitles, and creates a v002 human score template. It does not re-render and does not create a new MP4.
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/review_pack/review_frames/`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/review_pack/review_contact_sheet.jpg`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/review_pack/render_review_checklist_v002.md`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/review_pack/render_review_summary_v002.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/v002/review_pack/human_review_scores_v002.json`
+
+## Batch Render Scripts
+
+Run:
+
+```bash
+python main.py batch-render-scripts --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --scripts V1,V2,V3,V4,V5
+```
+
+This renders multiple `script_id` candidates from the v002 render plan. `V1` through `V5` are script IDs, not iteration versions. Outputs are named as `script_V1_iter002` to avoid confusion with v001/v002 strategy versions.
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002/script_VX/dog_stairs_v1_khaki_batch_20260615_001_script_VX_iter002.mp4`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002/script_VX/dog_stairs_v1_khaki_batch_20260615_001_script_VX_iter002.srt`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002/script_VX/review_pack/`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002/batch_render_summary_iter002.json`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002/batch_render_report_iter002.md`
+
+## OpenAI TTS POC
+
+Run:
+
+```bash
+python main.py openai-tts-poc --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --scripts V1,V3 --voice marin --model gpt-4o-mini-tts --response-format wav --speed 1.08
+```
+
+This reads parsed `voiceover_lines.csv`, generates OpenAI TTS WAV files for selected script IDs, checks audio duration against the existing rendered MP4, and muxes the fitted voiceover as AAC. It does not burn subtitles, does not re-edit video, and does not use local TTS or voice cloning.
+
+Safety:
+
+- Requires `OPENAI_API_KEY` in the environment.
+- The API key is never written to request JSON, reports, logs, or README.
+- If `OPENAI_API_KEY` is missing, the command writes a safe failure summary and does not call OpenAI.
+
+## Edge TTS POC
+
+Run:
+
+```bash
+python main.py edge-tts-poc --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --scripts V1,V3 --voice en-US-JennyNeural --rate +8%
+```
+
+This reads parsed `voiceover_lines.csv`, generates edge-tts MP3 voiceovers, fits the audio duration without truncating speech, and muxes the fitted WAV as the only AAC audio track. It does not call OpenAI, does not burn subtitles, and does not re-edit video.
+
+Outputs:
+
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002_tts_edge/script_VX/voiceover_raw_script_VX_iter002.mp3`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002_tts_edge/script_VX/voiceover_fitted_script_VX_iter002.wav`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002_tts_edge/script_VX/dog_stairs_v1_khaki_batch_20260615_001_script_VX_iter002_with_edge_tts.mp4`
+- `../products/dog_stairs_v1/outputs/renders/batch_20260615_001/iter002_tts_edge/tts_batch_summary_edge_iter002.json`
+
+## Edge TTS Segment Align
+
+Run:
+
+```bash
+python main.py edge-tts-segment-align --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --scripts V1,V3 --voice en-US-JennyNeural --rate +8%
+```
+
+This generates one edge-tts clip per timeline segment, fits each segment to its own timing window, concatenates the fitted WAV segments, and muxes that full aligned voiceover onto the existing iter002 MP4. It does not re-edit video, does not burn subtitles, and does not call OpenAI.
+
+## Edge TTS Three-Block Fast Mode
+
+Run:
+
+```bash
+python main.py edge-tts-three-block --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --scripts V1,V3 --voice en-US-JennyNeural --rate +8% --fast
+```
+
+This creates a natural three-block voiceover track for each selected script: hook, demo/proof, and CTA/memory. It does not create seven segment-level clips, does not burn subtitles, does not re-edit the video, and extracts the first frame for manual visual inspection.
+
+## Publish Candidate Pack
+
+Run:
+
+```bash
+python main.py prepare-publish-pack --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --tts-mode edge_tts_three_block --scripts V1,V3
+```
+
+This copies approved three-block TTS videos and their review artifacts into a manual upload candidate pack. It verifies duration, resolution, audio stream presence, and first-frame artifacts. It does not regenerate TTS, does not mux, does not burn subtitles, and does not publish.
+
+## Material Diversity And A/B Hook Audit
+
+Run:
+
+```bash
+python main.py audit-material-diversity --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --include-publish-metrics
+```
+
+This audits clip diversity, first-3-second hook capacity, duplicate risk, and creates an Owner-reviewed A/B hook matrix. It does not render MP4, does not generate TTS, does not mux, and does not modify `shot_matcher` or `actual_render`.
+
+## Variant Planner Hook Conflict Fuse
+
+Run:
+
+```bash
+python main.py plan-variants --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --iteration iter002 --audit-id P10A_material_diversity_ab_plan --approve-variants Variant_A_Pain_Point,Variant_B_Home_Aesthetic,Variant_C_Two_In_One_Reversal --no-render
+```
+
+This creates P10B variant plans, hook-zone conflict checks, difference scores, quality gates, and a P10C render input manifest. It does not render MP4, does not generate TTS, does not burn subtitles, and does not modify `shot_matcher` or `actual_render`.
+
+## Hook Window Visual Review Pack
+
+Run:
+
+```bash
+python main.py build-hook-review-pack --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --plan-id P10B_approved_abc_hook_conflict_fuse --variants Variant_A_Pain_Point,Variant_B_Home_Aesthetic,Variant_C_Two_In_One_Reversal
+```
+
+This exports first/mid/last hook frames, a hook contact sheet, and a low-bitrate hook-window preview for Owner review. It does not render a full MP4, does not generate TTS, does not mux, does not burn subtitles, and does not apply crop/hflip/speed/freeze perturbations.
+
+## Render Approved P10C Variants
+
+Run:
+
+```bash
+python main.py render-approved-variants --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --plan-id P10B_approved_abc_hook_conflict_fuse --review-id P10B2_hook_window_visual_review_abc --variants Variant_B_Home_Aesthetic,Variant_C_Two_In_One_Reversal --no-tts --no-subtitles
+```
+
+This renders only Owner-approved P10C variants from the P10B manifest. It skips Variant_A, generates muted 1080x1920 MP4s, review contact sheets, and manual publish-test notes. It does not generate TTS, does not burn subtitles, and does not modify `shot_matcher` or `actual_render`.
+### P10D approved variant voiceover
+
+Add three-block edge-tts voiceover to approved P10C visual variants without re-editing video or burning subtitles:
+
+```bash
+python main.py add-variant-voiceover --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --render-id P10C_approved_variants_bc --variants Variant_B_Home_Aesthetic,Variant_C_Two_In_One_Reversal --tts-mode edge_tts_three_block --voice en-US-JennyNeural --rate +8%
+```
+
+Outputs are written under `products/dog_stairs_v1/outputs/renders/batch_20260615_001/P10D_bc_three_block_voiceover/`.
+
+Generate a +10% rate comparison version without overwriting the +8% P10D output:
+
+```bash
+python main.py add-variant-voiceover --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --render-id P10C_approved_variants_bc --variants Variant_B_Home_Aesthetic,Variant_C_Two_In_One_Reversal --tts-mode edge_tts_three_block --voice en-US-JennyNeural --rate +10% --output-id P10D2_bc_three_block_voiceover_rate10
+```
+
+Prepare the final P10E publish candidate pack after Owner selects B +10% and C +8%:
+
+```bash
+python main.py prepare-final-publish-candidates --product dog_stairs_v1 --sku khaki --material-batch batch_20260615_001 --candidate-id P10E_final_bc_publish_candidates --variant-b-source P10D2_bc_three_block_voiceover_rate10 --variant-c-source P10D_bc_three_block_voiceover
+```
+
+### P11A batch-2 material intake
+
+Create a new material batch intake workspace, contact sheets, tag review folders, and a lightweight capability audit without rendering or TTS:
+
+```bash
+python main.py intake-material-batch --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+Place Batch 2 raw videos under `products/dog_stairs_v1/inputs/raw_videos/batch_20260617_001/` before running the command.
+
+### P11A2 tag review workspace
+
+Prepare the manual contact-sheet sorting workspace:
+
+```bash
+python main.py prepare-tag-review-workspace --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+After the Owner copies contact sheets into tag folders, collect folder-as-tag results:
+
+```bash
+python main.py collect-folder-tags --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+### P11B batch-2 level-1 matrix plan
+
+Generate six Level 1 variant plans and hook-window preview assets for Owner review without rendering full videos or generating TTS:
+
+```bash
+python main.py plan-batch-variant-matrix --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --matrix-size 6 --plan-id P11B_level1_matrix_plan_hook_preview
+```
+
+This reads Batch 2 `clip_manifest.csv`, `clip_tags.csv`, and `tag_review_summary.json`, then writes a matrix plan, diversity reports, hook previews, and a P11C render input manifest. It does not render complete MP4s, does not generate TTS, does not burn subtitles, and does not modify `shot_matcher` or `actual_render`.
+
+### P11B2 hook preview repair
+
+Repair black or incompatible P11B hook preview files by regenerating hook-only previews as H.264/yuv420p MP4s:
+
+```bash
+python main.py repair-hook-preview-pack --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --plan-id P11B_level1_matrix_plan_hook_preview --repair-id P11B2_repaired_hook_preview_pack
+```
+
+This only repairs hook-window review assets. It does not render full videos, generate TTS, burn subtitles, or modify `shot_matcher` / `actual_render`.
+
+Visual preview/review generation must follow [STRICT_VISUAL_FIDELITY_POLICY.md](docs/STRICT_VISUAL_FIDELITY_POLICY.md).
+
+Regenerate hook previews with strict visual fidelity rules after any visual quality incident:
+
+```bash
+python main.py repair-hook-preview-visual-fidelity --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --plan-id P11B_level1_matrix_plan_hook_preview --repair-id P11B3_visual_fidelity_fixed_hook_preview_pack
+```
+
+This command avoids scale, enhancement, sharpening, color correction, subtitles, and full rendering. It writes `visual_fidelity_audit.json` for each preview.
+
+Audit HDR / 10-bit color metadata and build two Owner-review preview modes:
+
+```bash
+python main.py audit-color-fidelity-and-build-safe-previews --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --plan-id P11B_level1_matrix_plan_hook_preview --audit-id P11B4_color_fidelity_audit_safe_preview
+```
+
+This creates `source_like_preview.mp4` and `controlled_sdr_preview.mp4` for each variant, plus color metadata diffs and before/after comparison frames. Owner must choose source-like, controlled SDR, hold, or reject before P11C.
+
+Lock the Owner-approved color pipeline after P11B4 review:
+
+```bash
+python main.py lock-owner-color-decision --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --audit-id P11B4_color_fidelity_audit_safe_preview --selected-pipeline controlled_sdr
+```
+
+This writes `owner_color_decision.json` and `color_pipeline_lock.json`. P11C must use `controlled_sdr` and must not fall back to `source_like`, P11B2/P11B3 previews, or raw `yuv420p` conversion.
+
+Replan rejected or held hooks after Owner controlled-SDR review without rendering full videos:
+
+```bash
+python main.py replan-hooks-after-owner-review --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --plan-id P11B_level1_matrix_plan_hook_preview --color-audit-id P11B4_color_fidelity_audit_safe_preview --replan-id P11B6_hook_replacement_variant_replan
+```
+
+This keeps V02/V03 locked approved, creates replacement candidates for V01/V04/V05/V06, and exports controlled-SDR hook previews only. It does not enter P11C, render complete videos, generate TTS, or burn subtitles.
+
+Lock final Owner replacement decisions and write the only allowed P11C controlled-SDR input manifest:
+
+```bash
+python main.py lock-owner-replacement-decisions --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --replan-id P11B6_hook_replacement_variant_replan --color-audit-id P11B4_color_fidelity_audit_safe_preview --decision-id P11B7_owner_replacement_decision_lock
+```
+
+This writes `p11c_render_manifest_controlled_sdr.json` with the five Owner-approved variants and stores rejected hooks in `negative_hook_examples.json`. It does not render complete videos or enter P11C.
+
+Low-friction production rules are documented in [LOW_FRICTION_PRODUCTION_PIPELINE_POLICY.md](docs/LOW_FRICTION_PRODUCTION_PIPELINE_POLICY.md).
+
+Render the five P11C Batch 2 visual masters with the locked controlled-SDR pipeline:
+
+```bash
+python main.py render-approved-visual-masters --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --decision-id P11B7_owner_replacement_decision_lock --color-audit-id P11B4_color_fidelity_audit_safe_preview --render-id P11C_visual_masters_controlled_sdr
+```
+
+This renders visual masters and Owner review packs only. It does not generate TTS, voiceover, subtitles, publish candidates, titles, captions, or enter P11D.
+
+Produce P11D three-block voiced review videos from Owner-approved P11C visual masters:
+
+```bash
+python main.py produce-voiceover-review-pack --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --visual-render-id P11C_visual_masters_controlled_sdr --voiceover-id P11D_three_block_voiceover_review_pack
+```
+
+This generates sidecar scripts, edge-tts audio, and voiced review MP4s using `-c:v copy`. It does not burn subtitles, alter the controlled-SDR visual masters, generate publish candidates, or enter P11E.
+
+Build P11E publish candidates from Owner-approved voiced review videos:
+
+```bash
+python main.py build-publish-candidates --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --voiceover-id P11D_three_block_voiceover_review_pack --publish-id P11E_batch2_publish_candidates
+```
+
+This copies P11D `voiced_review.mp4` files to `final_candidate.mp4` without re-rendering, re-encoding, changing audio, burning subtitles, generating new TTS, or publishing automatically. The pack is marked as `hook_ab_test` and records `high_body_overlap_after_3s` as a known Batch2 limitation.
+
+## P12 Refactor Audit And Laptop Handoff
+
+P12A reverse-audit and migration docs live under:
+
+```text
+docs/p12_refactor_audit/
+docs/P11_FINAL_STATUS_AND_LIMITATIONS.md
+docs/LAPTOP_SETUP_GUIDE.md
+docs/DESKTOP_TO_LAPTOP_HANDOFF_CHECKLIST.md
+```
+
+Laptop bootstrap scripts:
+
+```text
+scripts/setup_windows_laptop.ps1
+scripts/verify_laptop_env.ps1
+scripts/smoke_test_laptop.ps1
+```
+
+P12A does not implement the runtime agent. It documents hard rules, general rules, redundant-rule candidates, VLM QC boundaries, `agent_state`, Owner Firewall, Git hygiene, and laptop setup.

@@ -14,11 +14,15 @@ env/
 
 # Environment files
 .env
+.env.*
+!.env.example
+!**/.env.example
 *.env.local
 
 # OS and editor files
 .DS_Store
 Thumbs.db
+.ipynb_checkpoints/
 .vscode/
 
 # Reference repositories are read-only external sources.
@@ -26,6 +30,8 @@ Thumbs.db
 !00_references/.gitkeep
 
 # Large or generated media assets
+*.log
+*.xlsx
 *.mp4
 *.mov
 *.mkv
@@ -41,7 +47,15 @@ Thumbs.db
 *.webp
 *.gif
 
+# Product media and generated outputs must stay out of Git.
+products/*/inputs/raw_videos/
+products/*/assets/raw_videos/
+products/*/outputs/
+products/**/outputs/
+
 # Keep scaffold directories while ignoring generated runtime contents.
+**pycache**/
+**/__pycache__/
 03_tk_video_agent/inputs/**
 !03_tk_video_agent/inputs/**/
 !03_tk_video_agent/inputs/**/.gitkeep
