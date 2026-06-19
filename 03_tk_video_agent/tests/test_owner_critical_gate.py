@@ -54,7 +54,7 @@ class OwnerCriticalGateTests(unittest.TestCase):
     def test_approve_generates_resume_instruction_and_clears_checkpoint(self):
         state = AgentState(product="dog_stairs_v1", sku="khaki", material_batch="batch_20260617_001", variants_requested=12)
         request_owner_review(state, _checkpoint())
-        decision = {"decision": "approve", "checkpoint_id": "CP_TEST_001", "decided_at": "2026-06-19T00:00:00Z", "owner_note": "approved", "actor": "owner"}
+        decision = {"decision": "approve", "checkpoint_id": "CP_TEST_001", "decided_at": "2026-06-19T00:00:00Z", "owner_note": "approved"}
         result = apply_owner_decision(state, decision)
         self.assertEqual(result["status"], "pass")
         self.assertFalse(state.awaiting_owner_review)

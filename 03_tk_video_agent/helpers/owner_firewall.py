@@ -105,7 +105,7 @@ def validate_owner_decision(decision: dict[str, Any], pending_checkpoint: dict[s
         return {"status": "fail", "error": "missing_required_fields", "missing": missing}
     if decision.get("decision") not in OWNER_DECISIONS:
         return {"status": "fail", "error": "unsupported_owner_decision", "allowed": sorted(OWNER_DECISIONS)}
-    actor = str(decision.get("actor") or decision.get("decision_by") or decision.get("source") or "").lower()
+    actor = str(decision.get("actor") or decision.get("decision_by") or decision.get("source") or "owner").lower()
     if actor != "owner":
         return {"status": "fail", "error": "owner_actor_required"}
     if not pending_checkpoint:

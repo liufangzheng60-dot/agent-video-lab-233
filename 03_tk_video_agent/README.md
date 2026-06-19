@@ -1367,3 +1367,13 @@ python main.py vertical-output-audit --product dog_stairs_v1 --sku khaki --mater
 ```
 
 The report includes failed segment IDs, failed time ranges, black bar failures, stretch failures, frame fill failures, semantic crop pending, replacement requirement, and publish/release readiness.
+
+## P12D Asset-Ready Preflight
+
+Run the Batch2 asset-ready preflight and stop at the Owner choice menu:
+
+```bash
+python main.py p12d-preflight --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+This command checks Git safety, counts raw videos, writes a read-only media inventory, runs laptop-safe resource preflight, runs a two-asset QC draft benchmark, runs the 9:16 known-failure regression, builds a deterministic candidate pool, and writes a 12-variant real batch plan. It does not render final videos, call real VLM, upload media, publish, or modify raw videos.

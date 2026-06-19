@@ -26,6 +26,7 @@ from helpers.material_batch import run_material_batch
 from helpers.product_workspace import repo_root_from_agent_root, require_product_workspace
 from helpers.contact_sheet import run_contact_sheet
 from helpers.owner_firewall import run_owner_firewall
+from helpers.p12d_preflight import run_p12d_asset_ready_preflight
 from helpers.render import run_render
 from helpers.subtitle_overlay import run_subtitles
 
@@ -102,11 +103,16 @@ def main() -> None:
     project_resume_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
     project_resume_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
     project_resume_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    project_resume_parser.add_argument("--execute", action="store_true", help="Execute an approved resume path when implemented; currently remains owner-gated.")
     vertical_audit_parser = subparsers.add_parser("vertical-output-audit", help="Audit true 9:16 final and segment output compliance without modifying video.")
     vertical_audit_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
     vertical_audit_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
     vertical_audit_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
     vertical_audit_parser.add_argument("--input", required=True, help="Video path or JSON manifest path to audit.")
+    p12d_parser = subparsers.add_parser("p12d-preflight", help="运行 P12D 素材就绪预检，并停在 Owner 选择界面。")
+    p12d_parser.add_argument("--product", required=True, help="Product slug.")
+    p12d_parser.add_argument("--sku", required=True, help="SKU slug.")
+    p12d_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -409,6 +415,83 @@ def main() -> None:
         print(f"release_allowed: {report['release_allowed']}")
         print(f"report_path: {result['report_path']}")
         return
+
+    if args.command == "p12d-preflight":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_p12d_asset_ready_preflight(repo_root, args.product, args.sku, args.material_batch)
+        if result["status"] == "asset_shortage":
+            count = result["raw_video_count"]
+            print("OWNER_ACTION_REQUIRED")
+            print(f"当前原片数量：{count}")
+            print("最低要求：50")
+            print(f"缺口数量：{50 - count}")
+            print(f"目标目录：{result['raw_dir']}")
+            print("已完成检查：Git Safety、Media Asset Guard、原片数量统计")
+            print("请选择：")
+            print("A. 补充原片至 50 条后重新检查")
+            print("B. 用当前数量做 3 条缩减版 Preflight，不真实渲染")
+            print("C. 指定新的素材目录")
+            print("D. 停止")
+            print("Codex 推荐：选择 A")
+            print("推荐理由：当前目标是 12 条真实批次 Preflight，少于 50 条会导致替换池和矩阵差异化失真。")
+            return
+        if result["status"] == "git_safety_blocked":
+            print("Git 安全检查失败：已阻止继续真实生产。")
+            print(result)
+            raise SystemExit(1)
+        if result["status"] == "resource_safety_blocked":
+            benchmark = result["benchmark"]
+            resource = result["resource_report"]
+            print("OWNER_REVIEW_REQUIRED")
+            print("检查点类型：GATE_RESOURCE_SAFETY_OVERRIDE")
+            print("当前资源数据：两素材 benchmark 未通过，真实 Batch 仍被阻止。")
+            print(f"首次 benchmark：{benchmark.get('first_attempt', benchmark)}")
+            print(f"降级后 benchmark：{benchmark if benchmark.get('first_attempt') else '未发生降级或降级未执行'}")
+            print(f"CPU P95：{benchmark.get('cpu_p95')}")
+            print(f"内存 P95：{benchmark.get('memory_p95')}")
+            print(f"可用磁盘：{resource.get('disk_free_gb')} GB")
+            print(f"供电状态：{resource.get('power_status')}")
+            print("请选择：")
+            print("A. 分批运行")
+            print("B. 进一步降低 QC draft 规格")
+            print("C. 更换设备")
+            print("D. 停止")
+            print("Codex 推荐：A")
+            print("推荐理由：不提高并发、不放宽 9:16，优先用更小批次降低资源风险。")
+            return
+        if result["status"] == "owner_review_required":
+            checkpoint = result["checkpoint"]
+            benchmark = result["benchmark"]
+            resource = result["resource_report"]
+            real_plan = result["real_plan"]
+            print("OWNER_REVIEW_REQUIRED")
+            print(f"检查点编号：{checkpoint['checkpoint_id']}")
+            print(f"当前目标：{checkpoint['current_goal']}")
+            print(f"原片数量：{result['raw_video_count']}")
+            print(f"素材盘点结果：ffprobe 通过 {result['inventory']['probe_pass_count']} / {result['inventory']['raw_video_count']}")
+            print(f"资源基准结果：{benchmark.get('result')}")
+            print(f"CPU P95：{benchmark.get('cpu_p95')}")
+            print(f"内存 P95：{benchmark.get('memory_p95')}")
+            print(f"可用磁盘：{resource.get('disk_free_gb')} GB")
+            print(f"供电状态：{resource.get('power_status')}")
+            print(f"9:16 回归结果：{result['vertical_report'].get('result')}")
+            print(f"可规划 Variant 数量：{real_plan.get('planned_variants')}")
+            print(f"矩阵差异化结果：{real_plan.get('diversity_policy', {}).get('result')}")
+            print(f"替换池结果：候选 {real_plan.get('planned_variants')} 条计划已生成")
+            print(f"预计运行时长：{real_plan.get('estimated_runtime')}")
+            print(f"预计磁盘增长：{real_plan.get('estimated_disk_growth')}")
+            print("是否使用真实 VLM：否")
+            print("是否自动发布：否")
+            print(f"主要风险：{'; '.join(checkpoint['main_risks'])}")
+            print("请选择一个方案：")
+            print("A. 批准正式运行 12 条本地 Batch2 视频")
+            print("B. 先运行 3 条真实视频小批验证")
+            print("C. 修订计划后重新 Preflight")
+            print("D. 停止")
+            print("Codex 推荐方案：B")
+            print("推荐理由：先用 3 条真实视频验证资源、9:16 与替换闭环，可以降低第一次真实批量运行的时间和风险。")
+            print("Owner 可直接回复：选择 A / 选择 B / 选择 C，并补充修改要求 / 选择 D")
+            return
 
     parser.print_help()
 

@@ -82,6 +82,8 @@ exact_resume_instruction:
 
 Outside mandatory gates, Codex should avoid frequent Owner questions.
 
+For Owner-facing gate output, use Simplified Chinese and present a concrete choice menu. A gate request must include the current problem, why Owner approval is mandatory, completed work, 2-4 executable options, action/benefit/cost/risk/runtime for each option, Codex recommendation and reason, direct Owner reply labels such as `选择 A`, and the exact next command after a valid choice. Do not output vague prompts such as "please confirm", "if no objection", or "recommended to approve" without executable options.
+
 ## GPT Consultation Boundary
 
 GPT and chat are consultation mentors for major architecture, business tradeoffs, cost decisions, and high-risk checkpoints. GPT advice is not execution authorization. Only an explicit Owner `approve`, `reject`, `revise`, or `stop` decision can continue or stop gated work.
