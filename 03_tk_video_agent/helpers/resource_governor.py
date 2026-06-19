@@ -130,6 +130,17 @@ class ResourceGovernor:
     def record_metrics(self) -> dict[str, Any]:
         return self.inspect_hardware()
 
+    def sample_runtime_metrics(self) -> dict[str, Any]:
+        memory = _memory_status()
+        return {
+            "cpu_percent": _cpu_percent(),
+            "memory_percent": memory[2],
+            "disk_free_gb": round(shutil.disk_usage(self.repo_root).free / (1024**3), 2),
+            "ffmpeg_count": _process_count("ffmpeg"),
+            "python_count": _process_count("python"),
+            "created_at": time.time(),
+        }
+
     def checkpoint_and_stop(self, reason: str) -> dict[str, Any]:
         return {"pipeline_status": "PAUSED_BY_RESOURCE_GOVERNOR", "reason": reason}
 
@@ -206,6 +217,20 @@ def _power_status() -> str:
     except Exception:
         return "unknown"
     return "unknown"
+
+
+def _cpu_percent() -> float:
+    try:
+        result = subprocess.run(
+            ["powershell", "-NoProfile", "-Command", "(Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        return round(float(result.stdout.strip() or 0), 2)
+    except Exception:
+        return 0.0
 
 
 def _process_count(name: str) -> int:

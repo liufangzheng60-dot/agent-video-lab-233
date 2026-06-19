@@ -27,6 +27,7 @@ from helpers.product_workspace import repo_root_from_agent_root, require_product
 from helpers.contact_sheet import run_contact_sheet
 from helpers.owner_firewall import run_owner_firewall
 from helpers.p12d_preflight import run_p12d_asset_ready_preflight
+from helpers.p12d_three_variant_runner import run_three_variant_validation
 from helpers.render import run_render
 from helpers.subtitle_overlay import run_subtitles
 
@@ -113,6 +114,10 @@ def main() -> None:
     p12d_parser.add_argument("--product", required=True, help="Product slug.")
     p12d_parser.add_argument("--sku", required=True, help="SKU slug.")
     p12d_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
+    p12d_three_parser = subparsers.add_parser("p12d-run-three-variant", help="执行 Owner 已批准的 P12D 三条真实视频小批验证。")
+    p12d_three_parser.add_argument("--product", required=True, help="Product slug.")
+    p12d_three_parser.add_argument("--sku", required=True, help="SKU slug.")
+    p12d_three_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -492,6 +497,39 @@ def main() -> None:
             print("推荐理由：先用 3 条真实视频验证资源、9:16 与替换闭环，可以降低第一次真实批量运行的时间和风险。")
             print("Owner 可直接回复：选择 A / 选择 B / 选择 C，并补充修改要求 / 选择 D")
             return
+
+    if args.command == "p12d-run-three-variant":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_three_variant_validation(repo_root, args.product, args.sku, args.material_batch)
+        if result["status"] != "owner_review_required":
+            print(f"三条真实视频验证未完成：{result}")
+            raise SystemExit(1)
+        summary = result["summary"]
+        print("OWNER_REVIEW_REQUIRED")
+        print("检查点类型：GATE_THREE_VARIANT_VALIDATION_REVIEW")
+        print(f"3 条视频输出目录：{summary['output_dir']}")
+        print(f"成功、Hold、失败数量：{summary['success_count']} / {summary['hold_count']} / {summary['failed_count']}")
+        print(f"每条实际运行时长：{ {item['variant_id']: item['elapsed_sec'] for item in summary['variant_results']} }")
+        print(f"CPU P50 / P95：{summary['cpu_p50']} / {summary['cpu_p95']}")
+        print(f"内存 P50 / P95：{summary['memory_p50']} / {summary['memory_p95']}")
+        print(f"磁盘增长：{summary['disk_growth_bytes']} bytes")
+        print(f"9:16 最终容器结果：通过 {summary['final_container_pass_count']} / 3")
+        print(f"Segment-level 审计结果：失败 segment 数 {summary['segment_failed_count']}")
+        print(f"横屏嵌套、黑边、拉伸失败数量：{summary['horizontal_inset_failures']} / {summary['black_bar_failures']} / {summary['stretch_failures']}")
+        print(f"自动替换次数：{summary['auto_replacement_count']}")
+        print(f"Hook / Body / Proof / CTA 重复率：{summary['hook_repeat_rate']} / {summary['body_repeat_rate']} / {summary['proof_repeat_rate']} / {summary['cta_repeat_rate']}")
+        print(f"Body Structure 数量：{summary['body_structure_count']}")
+        print(f"音频生成结果：成功 {summary['audio_success_count']} / 3")
+        print(f"Video Stream Copy 结果：成功 {summary['video_stream_copy_success_count']} / 3")
+        print(f"Git 媒体数量：{summary['git_media_count']}")
+        print(f"raw_videos 修改数量：{summary['raw_videos_modified_count']}")
+        print(f"关键问题：{'; '.join(summary['main_risks'])}")
+        print("继续剩余 9 条的可选方案：")
+        print("A. 批准继续剩余 9 条")
+        print("B. 先人工审查这 3 条，再修订计划")
+        print("C. 停止")
+        print("Codex 推荐：B")
+        return
 
     parser.print_help()
 
