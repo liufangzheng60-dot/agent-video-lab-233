@@ -1325,3 +1325,33 @@ python main.py owner-firewall --product dog_stairs_v1 --sku khaki --material-bat
 ```
 
 P12B writes reports under `../products/<product>/outputs/agent_factory/<material_batch>/`. It does not render MP4 files, call Gemini, generate TTS, delete raw videos, modify timelines, publish, or add media to Git.
+
+## P12C Autonomous Codex Operator
+
+The root `../AGENTS.md` is the durable project contract for Codex takeover. It defines Codex autonomous authority, mandatory Owner gates, Owner Review Packet format, GPT consultation boundaries, execution loop, session resume behavior, and single-writer data isolation.
+
+Operator status:
+
+```bash
+python main.py project-operator-status --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+Owner review packet:
+
+```bash
+python main.py owner-review-packet --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+Apply an explicit Owner decision:
+
+```bash
+python main.py owner-decision-apply --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --decision-file owner_decision.json
+```
+
+Resume helper:
+
+```bash
+python main.py project-resume --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+P12C does not enable real VLM, generate videos, run real Batch2 production, publish, or relax any media and Git guards.

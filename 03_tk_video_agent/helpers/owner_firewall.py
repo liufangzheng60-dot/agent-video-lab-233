@@ -19,6 +19,8 @@ SUPPORTED_ACTIONS = {
     "force_write_negative_example",
 }
 
+OWNER_DECISIONS = {"approve", "reject", "revise", "stop"}
+
 
 def default_decision_template(variants_requested: int) -> dict[str, Any]:
     variants = [f"V{i:02d}" for i in range(1, variants_requested + 1)]
@@ -44,6 +46,89 @@ def write_decision_template(path: Path | str, variants_requested: int) -> Path:
 
 def load_owner_decisions(path: Path | str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def generate_owner_review_packet(checkpoint: dict[str, Any]) -> str:
+    """Render the standard Owner Review Packet text."""
+    fields = [
+        "checkpoint_id",
+        "checkpoint_type",
+        "current_goal",
+        "completed_work",
+        "proposed_action",
+        "why_needed",
+        "business_benefit",
+        "affected_files",
+        "hard_rules_affected",
+        "estimated_cost",
+        "estimated_runtime",
+        "reversible",
+        "main_risks",
+        "tests_completed",
+        "codex_recommendation",
+    ]
+    lines = ["OWNER_REVIEW_REQUIRED", ""]
+    for name in fields:
+        value = checkpoint.get(name, "")
+        if isinstance(value, list):
+            value = ", ".join(str(item) for item in value)
+        lines.append(f"{name}: {value}")
+    lines.extend(["owner_options:", "- approve", "- reject", "- revise", "exact_resume_instruction: " + str(checkpoint.get("exact_resume_instruction", ""))])
+    return "\n".join(lines) + "\n"
+
+
+def request_owner_review(state: Any, checkpoint: dict[str, Any]) -> dict[str, Any]:
+    """Mark an AgentState-like object as waiting for Owner review."""
+    state.awaiting_owner_review = True
+    state.pending_checkpoint = checkpoint
+    state.owner_firewall_status = {"status": "owner_review_required", "checkpoint_id": checkpoint.get("checkpoint_id")}
+    state.next_recommended_action = "Owner must approve, reject, revise, or stop the checkpoint."
+    state.touch()
+    return state.to_dict()
+
+
+def validate_owner_decision(decision: dict[str, Any], pending_checkpoint: dict[str, Any] | None) -> dict[str, Any]:
+    """Validate that a decision is an explicit Owner decision for the pending checkpoint."""
+    required = ["decision", "checkpoint_id", "decided_at", "owner_note"]
+    missing = [key for key in required if not decision.get(key)]
+    if missing:
+        return {"status": "fail", "error": "missing_required_fields", "missing": missing}
+    if decision.get("decision") not in OWNER_DECISIONS:
+        return {"status": "fail", "error": "unsupported_owner_decision", "allowed": sorted(OWNER_DECISIONS)}
+    actor = str(decision.get("actor") or decision.get("decision_by") or decision.get("source") or "").lower()
+    if actor != "owner":
+        return {"status": "fail", "error": "owner_actor_required"}
+    if not pending_checkpoint:
+        return {"status": "fail", "error": "no_pending_checkpoint"}
+    if decision["checkpoint_id"] != pending_checkpoint.get("checkpoint_id"):
+        return {"status": "fail", "error": "checkpoint_id_mismatch"}
+    return {"status": "pass"}
+
+
+def apply_owner_decision(state: Any, decision: dict[str, Any]) -> dict[str, Any]:
+    validation = validate_owner_decision(decision, state.pending_checkpoint)
+    if validation["status"] != "pass":
+        return {"status": "fail", "validation": validation}
+    state.last_owner_decision = decision
+    state.owner_firewall_status = {"status": "decision_applied", "decision": decision["decision"], "checkpoint_id": decision["checkpoint_id"]}
+    if decision["decision"] == "approve":
+        clear_checkpoint_after_approval(state)
+        state.resume_instruction = "Resume the approved checkpoint with the next safe implementation step."
+    elif decision["decision"] == "revise":
+        state.awaiting_owner_review = False
+        state.resume_instruction = "Revise the proposed action according to Owner note, then re-run Phase Guard."
+        state.pending_checkpoint = None
+    else:
+        state.awaiting_owner_review = False
+        state.resume_instruction = "Stop gated work. Do not continue this checkpoint without a new Owner instruction."
+    state.touch()
+    return {"status": "pass", "state": state.to_dict(), "resume_instruction": state.resume_instruction}
+
+
+def clear_checkpoint_after_approval(state: Any) -> None:
+    state.awaiting_owner_review = False
+    state.pending_checkpoint = None
+    state.next_recommended_action = "Continue approved work; rerun safety checks before commit."
 
 
 def evaluate_owner_firewall(decisions: dict[str, Any], *, dry_run: bool = True) -> dict[str, Any]:

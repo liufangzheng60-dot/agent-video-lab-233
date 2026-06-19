@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 import json
+import subprocess
 from pathlib import Path
 from typing import Any
 
-from helpers.agent_state import AgentState
+from helpers.agent_state import AgentState, load_agent_state
+from helpers.evidence_registry import append_evidence
 from helpers.git_safety_guard import run_git_safety_guard
 from helpers.media_asset_guard import run_media_asset_guard
-from helpers.owner_firewall import write_decision_template
+from helpers.owner_firewall import apply_owner_decision, generate_owner_review_packet, load_owner_decisions, write_decision_template
 from helpers.vlm_qc_gate import audit_video_via_vlm, write_vlm_policy
 
 
@@ -30,6 +32,57 @@ STAGES = [
 
 def agent_output_dir(repo_root: Path | str, product: str, material_batch: str) -> Path:
     return Path(repo_root) / "products" / product / "outputs" / "agent_factory" / material_batch
+
+
+def agent_state_path(repo_root: Path | str, product: str, material_batch: str) -> Path:
+    return agent_output_dir(repo_root, product, material_batch) / "agent_state.json"
+
+
+def evidence_path(repo_root: Path | str, product: str, material_batch: str) -> Path:
+    return agent_output_dir(repo_root, product, material_batch) / "operator_evidence.jsonl"
+
+
+def load_or_create_agent_state(repo_root: Path | str, product: str, sku: str, material_batch: str, variants: int = 0) -> AgentState:
+    path = agent_state_path(repo_root, product, material_batch)
+    if path.exists():
+        state = load_agent_state(path)
+        if not state.current_goal:
+            state.current_goal = "Autonomous Codex operator bootstrap"
+        if not state.active_task:
+            state.active_task = "project_operator_status"
+        if not state.next_recommended_action:
+            state.next_recommended_action = "Run safe implementation tasks until a mandatory Owner Gate is reached."
+        return state
+    state = AgentState(
+        product=product,
+        sku=sku,
+        material_batch=material_batch,
+        variants_requested=variants,
+        current_goal="Autonomous Codex operator bootstrap",
+        active_task="project_operator_status",
+        current_stage="operator_bootstrap",
+        next_recommended_action="Run safe implementation tasks until a mandatory Owner Gate is reached.",
+    )
+    state.output_paths["agent_state"] = str(path)
+    state.write_json(path)
+    return state
+
+
+def _git_text(repo_root: Path, args: list[str]) -> str:
+    result = subprocess.run(["git", *args], cwd=repo_root, capture_output=True, text=True, check=False)
+    return result.stdout.strip() if result.returncode == 0 else result.stderr.strip()
+
+
+def _git_state(repo_root: Path) -> dict[str, Any]:
+    head = _git_text(repo_root, ["rev-parse", "HEAD"])
+    origin = _git_text(repo_root, ["rev-parse", "origin/main"])
+    return {
+        "branch": _git_text(repo_root, ["branch", "--show-current"]),
+        "head": head,
+        "origin_main": origin,
+        "synced_with_origin_main": bool(head and head == origin),
+        "status_short": _git_text(repo_root, ["status", "--short"]),
+    }
 
 
 def _hard_rule_preflight() -> dict[str, Any]:
@@ -124,6 +177,74 @@ def run_agent_produce_review_pack_dry_run(
     _write_stage_plan(out_dir / "dry_run_stage_plan.md")
     _write_risk_report(out_dir / "dry_run_risk_report.md")
     return {"output_dir": out_dir, "state": state.to_dict(), "variant_ids": variant_ids}
+
+
+def run_project_operator_status(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch)
+    git_report = run_git_safety_guard(repo)
+    media_report = run_media_asset_guard(repo, product, material_batch)
+    state.last_safe_commit = _git_text(repo, ["rev-parse", "HEAD"])
+    if not state.next_recommended_action:
+        state.next_recommended_action = "Continue safe Codex development work until Phase Guard requires Owner review."
+    state.touch()
+    state.write_json(agent_state_path(repo, product, material_batch))
+    status = {
+        "current_goal": state.current_goal,
+        "active_task": state.active_task,
+        "current_stage": state.current_stage,
+        "git_state": _git_state(repo),
+        "awaiting_owner_review": state.awaiting_owner_review,
+        "pending_checkpoint": state.pending_checkpoint,
+        "last_owner_decision": state.last_owner_decision,
+        "last_safe_commit": state.last_safe_commit,
+        "next_recommended_action": state.next_recommended_action,
+        "git_safety": git_report,
+        "media_asset_guard": media_report,
+    }
+    append_evidence(evidence_path(repo, product, material_batch), "resume", {"command": "project-operator-status", "status": status})
+    return status
+
+
+def run_owner_review_packet(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch)
+    if not state.pending_checkpoint:
+        return {"status": "NO_OWNER_REVIEW_REQUIRED", "packet": "NO_OWNER_REVIEW_REQUIRED\n"}
+    packet = generate_owner_review_packet(state.pending_checkpoint)
+    return {"status": "OWNER_REVIEW_REQUIRED", "packet": packet}
+
+
+def run_owner_decision_apply(repo_root: Path | str, product: str, sku: str, material_batch: str, decision_file: Path | str) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch)
+    decision = load_owner_decisions(decision_file)
+    result = apply_owner_decision(state, decision)
+    if result["status"] != "pass":
+        return result
+    state.write_json(agent_state_path(repo, product, material_batch))
+    append_evidence(evidence_path(repo, product, material_batch), "owner_decision", {"decision": decision, "result": result["status"]})
+    return result
+
+
+def run_project_resume(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch)
+    if state.awaiting_owner_review and state.pending_checkpoint:
+        next_action = "Stop and wait for Owner decision."
+    else:
+        next_action = state.next_recommended_action or "Continue the next safe implementation step."
+    result = {
+        "active_task": state.active_task,
+        "current_stage": state.current_stage,
+        "awaiting_owner_review": state.awaiting_owner_review,
+        "pending_checkpoint": state.pending_checkpoint,
+        "last_owner_decision": state.last_owner_decision,
+        "resume_instruction": state.resume_instruction,
+        "next_safe_action": next_action,
+    }
+    append_evidence(evidence_path(repo, product, material_batch), "resume", result)
+    return result
 
 
 def _write_stage_plan(path: Path) -> Path:

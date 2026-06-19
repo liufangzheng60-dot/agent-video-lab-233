@@ -6,7 +6,14 @@ import argparse
 from pathlib import Path
 
 from helpers.batch_variants import run_batch_variants
-from helpers.agent_factory_harness import run_agent_preflight, run_agent_produce_review_pack_dry_run
+from helpers.agent_factory_harness import (
+    run_agent_preflight,
+    run_agent_produce_review_pack_dry_run,
+    run_owner_decision_apply,
+    run_owner_review_packet,
+    run_project_operator_status,
+    run_project_resume,
+)
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
 from helpers.experiment_record import run_experiment_record
@@ -77,6 +84,23 @@ def main() -> None:
     owner_firewall_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
     owner_firewall_parser.add_argument("--decision-file", required=True, help="Owner decision JSON path or filename in the agent output dir.")
     owner_firewall_parser.add_argument("--dry-run", action="store_true", help="Required for P12B; no destructive action is allowed.")
+    operator_status_parser = subparsers.add_parser("project-operator-status", help="Show P12C autonomous Codex operator status.")
+    operator_status_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    operator_status_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    operator_status_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    owner_review_packet_parser = subparsers.add_parser("owner-review-packet", help="Print the pending Owner Review Packet if one exists.")
+    owner_review_packet_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    owner_review_packet_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    owner_review_packet_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    owner_decision_apply_parser = subparsers.add_parser("owner-decision-apply", help="Apply an explicit Owner decision to a pending checkpoint.")
+    owner_decision_apply_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    owner_decision_apply_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    owner_decision_apply_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    owner_decision_apply_parser.add_argument("--decision-file", required=True, help="Owner decision JSON path.")
+    project_resume_parser = subparsers.add_parser("project-resume", help="Show the next safe resume instruction for the project operator.")
+    project_resume_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    project_resume_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    project_resume_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -319,6 +343,47 @@ def main() -> None:
         print(f"Owner firewall dry-run status: {result['status']}")
         print(f"Audit log: {output_dir / 'owner_firewall_audit_log.md'}")
         print(f"Result: {output_dir / 'owner_firewall_result.json'}")
+        return
+
+    if args.command == "project-operator-status":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_project_operator_status(repo_root, args.product, args.sku, args.material_batch)
+        print(f"current_goal: {result['current_goal']}")
+        print(f"active_task: {result['active_task']}")
+        print(f"current_stage: {result['current_stage']}")
+        print(f"git state: {result['git_state']}")
+        print(f"awaiting_owner_review: {result['awaiting_owner_review']}")
+        print(f"pending_checkpoint: {result['pending_checkpoint']}")
+        print(f"last_owner_decision: {result['last_owner_decision']}")
+        print(f"last_safe_commit: {result['last_safe_commit']}")
+        print(f"next_recommended_action: {result['next_recommended_action']}")
+        return
+
+    if args.command == "owner-review-packet":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_owner_review_packet(repo_root, args.product, args.sku, args.material_batch)
+        print(result["packet"].rstrip())
+        return
+
+    if args.command == "owner-decision-apply":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_owner_decision_apply(repo_root, args.product, args.sku, args.material_batch, Path(args.decision_file))
+        if result["status"] != "pass":
+            print(f"Owner decision apply failed: {result}")
+            raise SystemExit(1)
+        print(f"Owner decision applied: {result['resume_instruction']}")
+        return
+
+    if args.command == "project-resume":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_project_resume(repo_root, args.product, args.sku, args.material_batch)
+        print(f"active_task: {result['active_task']}")
+        print(f"current_stage: {result['current_stage']}")
+        print(f"awaiting_owner_review: {result['awaiting_owner_review']}")
+        print(f"pending_checkpoint: {result['pending_checkpoint']}")
+        print(f"last_owner_decision: {result['last_owner_decision']}")
+        print(f"resume_instruction: {result['resume_instruction']}")
+        print(f"next_safe_action: {result['next_safe_action']}")
         return
 
     parser.print_help()

@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,6 +31,14 @@ class AgentState:
     failed_variants: list[str] = field(default_factory=list)
     rerun_history: list[dict[str, Any]] = field(default_factory=list)
     final_review_pack_path: str | None = None
+    current_goal: str | None = None
+    active_task: str | None = None
+    awaiting_owner_review: bool = False
+    pending_checkpoint: dict[str, Any] | None = None
+    last_owner_decision: dict[str, Any] | None = None
+    resume_instruction: str | None = None
+    last_safe_commit: str | None = None
+    next_recommended_action: str | None = None
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 
@@ -47,7 +55,9 @@ class AgentState:
 
     @classmethod
     def from_dict(cls, payload: dict[str, Any]) -> "AgentState":
-        return cls(**payload)
+        allowed = {item.name for item in fields(cls)}
+        compatible_payload = {key: value for key, value in payload.items() if key in allowed}
+        return cls(**compatible_payload)
 
     def write_json(self, path: Path | str) -> Path:
         output_path = Path(path)
