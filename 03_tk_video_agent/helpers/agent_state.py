@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 from dataclasses import asdict, dataclass, field, fields
 from datetime import datetime, timezone
 from pathlib import Path
@@ -65,7 +66,12 @@ class AgentState:
     def write_json(self, path: Path | str) -> Path:
         output_path = Path(path)
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        output_path.write_text(json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        temp_path = output_path.with_name(output_path.name + ".tmp")
+        with temp_path.open("w", encoding="utf-8") as handle:
+            handle.write(json.dumps(self.to_dict(), indent=2, ensure_ascii=False) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_path, output_path)
         return output_path
 
 
