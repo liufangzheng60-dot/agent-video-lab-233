@@ -44,6 +44,10 @@ def evaluate_phase_action(action: dict[str, Any]) -> dict[str, Any]:
         return _owner_review("GATE_EXTERNAL_PROVIDER_ENABLE", "Real VLM enablement requires Owner approval.", action)
     if action.get("real_batch2") and int(action.get("variants", 0)) >= 12:
         return _owner_review("GATE_REAL_BATCH_LAUNCH", "First real Batch2 12+ video production requires Owner approval.", action)
+    if action.get("generate_real_videos") and int(action.get("variants", 0)) >= 12:
+        return _owner_review("GATE_REAL_BATCH_LAUNCH", "First real 12+ video generation requires Owner approval.", action)
+    if action.get("changes_9x16_hard_rule"):
+        return _owner_review("GATE_HARD_RULE_CHANGE", "Changing the 9:16 hard rule requires Owner approval.", action)
     if action.get("auto_publish"):
         return _block("GATE_RELEASE_OR_PUBLISH", "Automatic publishing is blocked.", action)
     return {"result": ALLOW, "checkpoint_type": None, "reason": "Ordinary safe action.", "action": action}

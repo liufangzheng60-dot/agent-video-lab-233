@@ -19,6 +19,7 @@ Codex must stop and produce an Owner Review Packet when a task hits any gate bel
 ### GATE_HARD_RULE_CHANGE
 
 Changing, deleting, or weakening any hard rule, including `controlled_sdr`, Git Safety, Media Asset Guard, no-auto-publish, and raw videos immutable.
+The TikTok 9:16 output rule is a hard rule: final videos and every timeline segment must remain true 9:16 without black bars, stretch, or horizontal inset.
 
 ### GATE_ARCHITECTURE_BREAKING_CHANGE
 
@@ -56,20 +57,26 @@ checkpoint_type:
 current_goal:
 completed_work:
 proposed_action:
-why_needed:
+why_owner_approval_is_mandatory:
 business_benefit:
 affected_files:
 hard_rules_affected:
+external_provider:
 estimated_cost:
 estimated_runtime:
+expected_video_count:
 reversible:
 main_risks:
 tests_completed:
+regression_tests_completed:
+git_commit:
+git_push_result:
 codex_recommendation:
 owner_options:
 - approve
 - reject
 - revise
+- stop
 exact_resume_instruction:
 ```
 
@@ -96,3 +103,4 @@ Source code is written only by Codex. `agent_state` is written only by Runtime H
 ## Highest Safety Lines
 
 Videos, images, audio, raw videos, generated outputs, `.xlsx`, `.env`, and API keys must not enter GitHub. `products/**/inputs/raw_videos/**` and `products/**/outputs/**` must stay ignored. Never use `git add .`, force push, destructive history rewrite, automatic publishing, or raw video deletion/move/overwrite.
+All TikTok outputs must pass the 9:16 hard guard before review, release, or publish readiness. A final 9:16 container is not enough; each segment must be checked for real vertical canvas, frame fill, black bars, stretch, and semantic crop risk.

@@ -55,16 +55,25 @@ def generate_owner_review_packet(checkpoint: dict[str, Any]) -> str:
         "checkpoint_type",
         "current_goal",
         "completed_work",
+        "9x16_guard_result",
+        "known_failure_regression_result",
+        "batch2_raw_video_directory",
+        "batch2_raw_video_count",
         "proposed_action",
-        "why_needed",
+        "why_owner_approval_is_mandatory",
         "business_benefit",
         "affected_files",
         "hard_rules_affected",
+        "external_provider",
         "estimated_cost",
         "estimated_runtime",
+        "expected_video_count",
         "reversible",
         "main_risks",
         "tests_completed",
+        "regression_tests_completed",
+        "git_commit",
+        "git_push_result",
         "codex_recommendation",
     ]
     lines = ["OWNER_REVIEW_REQUIRED", ""]
@@ -73,7 +82,7 @@ def generate_owner_review_packet(checkpoint: dict[str, Any]) -> str:
         if isinstance(value, list):
             value = ", ".join(str(item) for item in value)
         lines.append(f"{name}: {value}")
-    lines.extend(["owner_options:", "- approve", "- reject", "- revise", "exact_resume_instruction: " + str(checkpoint.get("exact_resume_instruction", ""))])
+    lines.extend(["owner_options:", "- approve", "- reject", "- revise", "- stop", "exact_resume_instruction: " + str(checkpoint.get("exact_resume_instruction", ""))])
     return "\n".join(lines) + "\n"
 
 
@@ -81,6 +90,7 @@ def request_owner_review(state: Any, checkpoint: dict[str, Any]) -> dict[str, An
     """Mark an AgentState-like object as waiting for Owner review."""
     state.awaiting_owner_review = True
     state.pending_checkpoint = checkpoint
+    state.pipeline_status = "BLOCKED_BY_OWNER_GATE"
     state.owner_firewall_status = {"status": "owner_review_required", "checkpoint_id": checkpoint.get("checkpoint_id")}
     state.next_recommended_action = "Owner must approve, reject, revise, or stop the checkpoint."
     state.touch()
@@ -116,10 +126,12 @@ def apply_owner_decision(state: Any, decision: dict[str, Any]) -> dict[str, Any]
         state.resume_instruction = "Resume the approved checkpoint with the next safe implementation step."
     elif decision["decision"] == "revise":
         state.awaiting_owner_review = False
+        state.pipeline_status = "REVISION_REQUIRED"
         state.resume_instruction = "Revise the proposed action according to Owner note, then re-run Phase Guard."
         state.pending_checkpoint = None
     else:
         state.awaiting_owner_review = False
+        state.pipeline_status = "STOPPED_BY_OWNER"
         state.resume_instruction = "Stop gated work. Do not continue this checkpoint without a new Owner instruction."
     state.touch()
     return {"status": "pass", "state": state.to_dict(), "resume_instruction": state.resume_instruction}
@@ -128,6 +140,7 @@ def apply_owner_decision(state: Any, decision: dict[str, Any]) -> dict[str, Any]
 def clear_checkpoint_after_approval(state: Any) -> None:
     state.awaiting_owner_review = False
     state.pending_checkpoint = None
+    state.pipeline_status = "OWNER_APPROVED_RESUME"
     state.next_recommended_action = "Continue approved work; rerun safety checks before commit."
 
 

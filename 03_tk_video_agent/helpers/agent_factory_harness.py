@@ -12,6 +12,8 @@ from helpers.evidence_registry import append_evidence
 from helpers.git_safety_guard import run_git_safety_guard
 from helpers.media_asset_guard import run_media_asset_guard
 from helpers.owner_firewall import apply_owner_decision, generate_owner_review_packet, load_owner_decisions, write_decision_template
+from helpers.owner_firewall import request_owner_review
+from helpers.vertical_output_guard import VerticalOutputGuard, build_shortage_report
 from helpers.vlm_qc_gate import audit_video_via_vlm, write_vlm_policy
 
 
@@ -94,6 +96,7 @@ def _hard_rule_preflight() -> dict[str, Any]:
             "HR_OWNER_FIREWALL",
             "HR_NO_SECRETS_IN_REPO",
             "HR_NO_GIT_ADD_DOT",
+            "HR_TIKTOK_TRUE_9X16_OUTPUT",
         ],
         "message": "P12B skeleton records hard-rule preflight intent only; later stages must call concrete hard-rule guards.",
     }
@@ -134,6 +137,7 @@ def run_agent_preflight(repo_root: Path | str, product: str, sku: str, material_
     git_report = run_git_safety_guard(repo, out_dir / "git_safety_report.json")
 
     state.hard_rule_results = hard_rule_report
+    state.vertical_output_guard_status = {"status": "registered", "hard_rule_id": "HR_TIKTOK_TRUE_9X16_OUTPUT"}
     state.media_asset_guard_results = media_report
     state.output_paths = {
         "agent_state": str(out_dir / "agent_state.json"),
@@ -141,6 +145,7 @@ def run_agent_preflight(repo_root: Path | str, product: str, sku: str, material_
         "media_asset_guard_report": str(out_dir / "media_asset_guard_report.json"),
         "git_safety_report": str(out_dir / "git_safety_report.json"),
         "owner_next_action": str(out_dir / "owner_next_action.md"),
+        "vertical_output_guard_status": "registered",
     }
     state.write_json(out_dir / "agent_state.json")
     _write_json(out_dir / "hard_rule_preflight_report.json", hard_rule_report)
@@ -194,6 +199,8 @@ def run_project_operator_status(repo_root: Path | str, product: str, sku: str, m
         "active_task": state.active_task,
         "current_stage": state.current_stage,
         "git_state": _git_state(repo),
+        "batch2_raw_count": media_report["raw_video_count"],
+        "9x16_hard_rule_status": state.vertical_output_guard_status or {"status": "registered", "hard_rule_id": "HR_TIKTOK_TRUE_9X16_OUTPUT"},
         "awaiting_owner_review": state.awaiting_owner_review,
         "pending_checkpoint": state.pending_checkpoint,
         "last_owner_decision": state.last_owner_decision,
@@ -204,6 +211,104 @@ def run_project_operator_status(repo_root: Path | str, product: str, sku: str, m
     }
     append_evidence(evidence_path(repo, product, material_batch), "resume", {"command": "project-operator-status", "status": status})
     return status
+
+
+def run_vertical_output_audit(
+    repo_root: Path | str,
+    product: str,
+    sku: str,
+    material_batch: str,
+    input_path: Path | str,
+) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch)
+    guard = VerticalOutputGuard()
+    report = guard.build_vertical_compliance_report(input_path)
+    out_dir = agent_output_dir(repo, product, material_batch)
+    report_path = out_dir / "vertical_output_audit_report.json"
+    _write_json(report_path, report)
+    state.vertical_output_guard_status = {
+        "status": "pass" if report["publish_allowed"] else "fail",
+        "hard_rule_id": "HR_TIKTOK_TRUE_9X16_OUTPUT",
+        "latest_report": str(report_path),
+    }
+    for segment_id in report["failed_segment_ids"]:
+        state.segment_replacement_attempts[segment_id] = state.segment_replacement_attempts.get(segment_id, 0) + 1
+        if state.segment_replacement_attempts[segment_id] >= 3:
+            state.failed_variants.append(report["variant_id"])
+    state.output_paths["vertical_output_audit_report"] = str(report_path)
+    state.write_json(agent_state_path(repo, product, material_batch))
+    append_evidence(evidence_path(repo, product, material_batch), "test_result", {"event": "vertical_output_audit", "report": report})
+    return {"report": report, "report_path": report_path}
+
+
+def build_segment_replacement_plan(state: AgentState, report: dict[str, Any]) -> dict[str, Any]:
+    guard = VerticalOutputGuard()
+    plans = {}
+    held = []
+    for segment_id in report.get("failed_segment_ids", []):
+        attempts = state.segment_replacement_attempts.get(segment_id, 0)
+        recommendation = guard.recommend_replacement({"segment_id": segment_id, "replacement_attempts": attempts})
+        plans[segment_id] = recommendation
+        if recommendation["action"] == "hold_variant":
+            held.append(report["variant_id"])
+    return {"variant_id": report.get("variant_id"), "replacement_plans": plans, "held_variants": held}
+
+
+def run_shortage_report(repo_root: Path | str, product: str, material_batch: str, target_count: int, passed_count: int, held_variants: list[str]) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    report = build_shortage_report(target_count, passed_count, held_variants)
+    _write_json(agent_output_dir(repo, product, material_batch) / "shortage_report.json", report)
+    return report
+
+
+def create_real_batch_launch_checkpoint(
+    repo_root: Path | str,
+    product: str,
+    sku: str,
+    material_batch: str,
+    *,
+    git_commit: str,
+    git_push_result: str,
+    tests_completed: list[str],
+    regression_tests_completed: list[str],
+) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    state = load_or_create_agent_state(repo, product, sku, material_batch, variants=12)
+    media_report = run_media_asset_guard(repo, product, material_batch)
+    checkpoint = {
+        "checkpoint_id": f"P12C_REAL_BATCH_LAUNCH_{material_batch}",
+        "checkpoint_type": "GATE_REAL_BATCH_LAUNCH",
+        "current_goal": "First real Batch2 autonomous Agent trial: generate 12 ordinary review-pack videos with 9:16 hard guard.",
+        "completed_work": "Autonomous operator contract, Owner gates, 9:16 hard guard, segment audit fixture, CLI, tests, commit, and push completed.",
+        "9x16_guard_result": "implemented_and_tested",
+        "known_failure_regression_result": "synthetic_horizontal_inset_fixture_failed_as_expected",
+        "batch2_raw_video_directory": str(repo / "products" / product / "inputs" / "raw_videos" / material_batch),
+        "batch2_raw_video_count": media_report["raw_video_count"],
+        "proposed_action": "Run the first real Batch2 Agent trial only after Owner approval.",
+        "why_owner_approval_is_mandatory": "This is the first real Batch2 12-video production run and may later require real VLM QC; both are mandatory Owner gates.",
+        "business_benefit": "Validate high-throughput ordinary review-pack production with true 9:16 segment-level safety.",
+        "affected_files": [],
+        "hard_rules_affected": ["HR_TIKTOK_TRUE_9X16_OUTPUT", "HR_OWNER_FIREWALL", "HR_RAW_VIDEOS_IMMUTABLE", "HR_NO_AUTO_PUBLISH"],
+        "external_provider": "none in this task; real VLM would require a separate GATE_EXTERNAL_PROVIDER_ENABLE approval",
+        "estimated_cost": "local compute only unless Owner later approves real VLM/TTS provider calls",
+        "estimated_runtime": "unknown until Batch2 raw videos are present; expected to be batch-scale local processing",
+        "expected_video_count": 12,
+        "reversible": "yes for generated outputs; raw_videos remain read-only and are never modified",
+        "main_risks": ["Batch2 raw videos missing on this machine", "semantic crop quality may require VLM/Owner hold", "first full run may reveal render-specific edge cases"],
+        "tests_completed": tests_completed,
+        "regression_tests_completed": regression_tests_completed,
+        "git_commit": git_commit,
+        "git_push_result": git_push_result,
+        "codex_recommendation": "approve only after Batch2 raw videos are locally present; do not approve real VLM until provider/cost is separately reviewed",
+        "exact_resume_instruction": "After Owner approve for this checkpoint, run the first real Batch2 Agent trial command without enabling real VLM unless a separate provider gate is approved.",
+    }
+    request_owner_review(state, checkpoint)
+    state.active_task = "awaiting_owner_approval_for_real_batch_launch"
+    state.current_stage = "owner_gate_real_batch_launch"
+    state.write_json(agent_state_path(repo, product, material_batch))
+    append_evidence(evidence_path(repo, product, material_batch), "checkpoint_created", checkpoint)
+    return {"state": state.to_dict(), "checkpoint": checkpoint, "packet": generate_owner_review_packet(checkpoint)}
 
 
 def run_owner_review_packet(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:

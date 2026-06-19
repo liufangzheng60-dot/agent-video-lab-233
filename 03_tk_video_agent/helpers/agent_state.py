@@ -27,6 +27,7 @@ class AgentState:
     media_asset_guard_results: dict[str, Any] = field(default_factory=dict)
     vlm_qc_results: dict[str, Any] = field(default_factory=dict)
     owner_firewall_status: dict[str, Any] = field(default_factory=lambda: {"status": "not_started"})
+    pipeline_status: str = "draft"
     output_paths: dict[str, str] = field(default_factory=dict)
     failed_variants: list[str] = field(default_factory=list)
     rerun_history: list[dict[str, Any]] = field(default_factory=list)
@@ -39,6 +40,8 @@ class AgentState:
     resume_instruction: str | None = None
     last_safe_commit: str | None = None
     next_recommended_action: str | None = None
+    vertical_output_guard_status: dict[str, Any] = field(default_factory=dict)
+    segment_replacement_attempts: dict[str, int] = field(default_factory=dict)
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 

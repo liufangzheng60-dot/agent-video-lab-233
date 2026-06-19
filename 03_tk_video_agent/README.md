@@ -1355,3 +1355,15 @@ python main.py project-resume --product dog_stairs_v1 --sku khaki --material-bat
 ```
 
 P12C does not enable real VLM, generate videos, run real Batch2 production, publish, or relax any media and Git guards.
+
+## TikTok 9:16 Hard Output Guard
+
+All TikTok outputs must pass the true 9:16 hard guard before review, release, or publish readiness. The guard checks the final container and every timeline segment; a final 1080x1920 container is not enough if a segment is horizontally inset, letterboxed, pillarboxed, stretched, or semantically unsafe.
+
+Audit a video or JSON manifest without modifying media:
+
+```bash
+python main.py vertical-output-audit --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001 --input path/to/video_or_manifest.json
+```
+
+The report includes failed segment IDs, failed time ranges, black bar failures, stretch failures, frame fill failures, semantic crop pending, replacement requirement, and publish/release readiness.

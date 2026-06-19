@@ -9,6 +9,7 @@ from helpers.batch_variants import run_batch_variants
 from helpers.agent_factory_harness import (
     run_agent_preflight,
     run_agent_produce_review_pack_dry_run,
+    run_vertical_output_audit,
     run_owner_decision_apply,
     run_owner_review_packet,
     run_project_operator_status,
@@ -101,6 +102,11 @@ def main() -> None:
     project_resume_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
     project_resume_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
     project_resume_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    vertical_audit_parser = subparsers.add_parser("vertical-output-audit", help="Audit true 9:16 final and segment output compliance without modifying video.")
+    vertical_audit_parser.add_argument("--product", required=True, help="Product slug for product-scoped runtime.")
+    vertical_audit_parser.add_argument("--sku", required=True, help="SKU slug for runtime state.")
+    vertical_audit_parser.add_argument("--material-batch", required=True, help="Material batch ID, for example batch_20260617_001.")
+    vertical_audit_parser.add_argument("--input", required=True, help="Video path or JSON manifest path to audit.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -352,6 +358,8 @@ def main() -> None:
         print(f"active_task: {result['active_task']}")
         print(f"current_stage: {result['current_stage']}")
         print(f"git state: {result['git_state']}")
+        print(f"batch2_raw_count: {result['batch2_raw_count']}")
+        print(f"9x16_hard_rule_status: {result['9x16_hard_rule_status']}")
         print(f"awaiting_owner_review: {result['awaiting_owner_review']}")
         print(f"pending_checkpoint: {result['pending_checkpoint']}")
         print(f"last_owner_decision: {result['last_owner_decision']}")
@@ -384,6 +392,22 @@ def main() -> None:
         print(f"last_owner_decision: {result['last_owner_decision']}")
         print(f"resume_instruction: {result['resume_instruction']}")
         print(f"next_safe_action: {result['next_safe_action']}")
+        return
+
+    if args.command == "vertical-output-audit":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_vertical_output_audit(repo_root, args.product, args.sku, args.material_batch, Path(args.input))
+        report = result["report"]
+        print(f"variant_id: {report['variant_id']}")
+        print(f"final_container_pass: {report['final_container_pass']}")
+        print(f"segment_count: {report['segment_count']}")
+        print(f"segments_failed: {report['segments_failed']}")
+        print(f"failed_segment_ids: {report['failed_segment_ids']}")
+        print(f"failed_time_ranges: {report['failed_time_ranges']}")
+        print(f"replacement_required: {report['auto_replacement_required']}")
+        print(f"publish_allowed: {report['publish_allowed']}")
+        print(f"release_allowed: {report['release_allowed']}")
+        print(f"report_path: {result['report_path']}")
         return
 
     parser.print_help()

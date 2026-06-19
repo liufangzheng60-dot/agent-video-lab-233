@@ -22,6 +22,7 @@ class CodexProjectContractTests(unittest.TestCase):
             "Session Resume",
             "Single-Writer Data Isolation",
             "Videos, images, audio, raw videos",
+            "TikTok 9:16 output rule",
             "Never use `git add .`",
         ]
         for item in required:
@@ -46,6 +47,11 @@ class CodexProjectContractTests(unittest.TestCase):
         self.assertEqual(result["result"], OWNER_REVIEW_REQUIRED)
         self.assertEqual(result["checkpoint_type"], "GATE_REAL_BATCH_LAUNCH")
 
+    def test_first_real_twelve_video_generation_requires_owner_review(self):
+        result = evaluate_phase_action({"type": "ordinary_code_change", "generate_real_videos": True, "variants": 12})
+        self.assertEqual(result["result"], OWNER_REVIEW_REQUIRED)
+        self.assertEqual(result["checkpoint_type"], "GATE_REAL_BATCH_LAUNCH")
+
     def test_staged_media_blocks(self):
         result = evaluate_phase_action({"type": "ordinary_code_change", "prohibited_staged_files": ["video.mp4"]})
         self.assertEqual(result["result"], BLOCK)
@@ -53,6 +59,12 @@ class CodexProjectContractTests(unittest.TestCase):
     def test_auto_publish_blocks(self):
         result = evaluate_phase_action({"type": "auto_publish"})
         self.assertEqual(result["result"], BLOCK)
+
+    def test_raw_video_delete_blocks_but_quarantine_plan_allows(self):
+        blocked = evaluate_phase_action({"type": "raw_video_delete"})
+        allowed = evaluate_phase_action({"type": "ordinary_code_change", "quarantine_plan": True})
+        self.assertEqual(blocked["result"], BLOCK)
+        self.assertEqual(allowed["result"], ALLOW)
 
     def test_git_guard_reports_staged_media_as_block_input(self):
         with tempfile.TemporaryDirectory() as tmp:

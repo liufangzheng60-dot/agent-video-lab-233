@@ -13,16 +13,25 @@ def _checkpoint() -> dict:
         "checkpoint_type": "GATE_REAL_BATCH_LAUNCH",
         "current_goal": "Generate 12 review pack videos",
         "completed_work": "Dry-run completed",
+        "9x16_guard_result": "implemented_and_tested",
+        "known_failure_regression_result": "passed",
+        "batch2_raw_video_directory": "products/dog_stairs_v1/inputs/raw_videos/batch_20260617_001",
+        "batch2_raw_video_count": 0,
         "proposed_action": "Run real Batch2 production",
-        "why_needed": "Validate throughput",
+        "why_owner_approval_is_mandatory": "First real Batch2 production is a mandatory Owner gate",
         "business_benefit": "More A/B test volume",
         "affected_files": [],
         "hard_rules_affected": [],
+        "external_provider": "none",
         "estimated_cost": "none",
         "estimated_runtime": "unknown",
+        "expected_video_count": 12,
         "reversible": "yes",
         "main_risks": ["media generation"],
         "tests_completed": ["focused"],
+        "regression_tests_completed": ["p12b"],
+        "git_commit": "abc123",
+        "git_push_result": "success",
         "codex_recommendation": "approve only after raw material is present",
         "exact_resume_instruction": "Run the approved real batch command.",
     }
@@ -34,6 +43,7 @@ class OwnerCriticalGateTests(unittest.TestCase):
         self.assertIn("OWNER_REVIEW_REQUIRED", packet)
         self.assertIn("checkpoint_id: CP_TEST_001", packet)
         self.assertIn("- approve", packet)
+        self.assertIn("- stop", packet)
 
     def test_checkpoint_mismatch_rejected(self):
         decision = {"decision": "approve", "checkpoint_id": "OTHER", "decided_at": "2026-06-19T00:00:00Z", "owner_note": "ok", "actor": "owner"}
@@ -58,6 +68,15 @@ class OwnerCriticalGateTests(unittest.TestCase):
         result = apply_owner_decision(state, decision)
         self.assertEqual(result["status"], "pass")
         self.assertIn("Stop gated work", state.resume_instruction)
+        self.assertEqual(state.pipeline_status, "STOPPED_BY_OWNER")
+
+    def test_stop_freezes_pipeline(self):
+        state = AgentState(product="dog_stairs_v1", sku="khaki", material_batch="batch_20260617_001", variants_requested=12)
+        request_owner_review(state, _checkpoint())
+        decision = {"decision": "stop", "checkpoint_id": "CP_TEST_001", "decided_at": "2026-06-19T00:00:00Z", "owner_note": "stop", "actor": "owner"}
+        result = apply_owner_decision(state, decision)
+        self.assertEqual(result["status"], "pass")
+        self.assertEqual(state.pipeline_status, "STOPPED_BY_OWNER")
 
     def test_gpt_suggestion_is_not_owner_authorization(self):
         state = AgentState(product="dog_stairs_v1", sku="khaki", material_batch="batch_20260617_001", variants_requested=12)
