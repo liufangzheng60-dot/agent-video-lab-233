@@ -106,3 +106,15 @@ Source code is written only by Codex. `agent_state` is written only by Runtime H
 
 Videos, images, audio, raw videos, generated outputs, `.xlsx`, `.env`, and API keys must not enter GitHub. `products/**/inputs/raw_videos/**` and `products/**/outputs/**` must stay ignored. Never use `git add .`, force push, destructive history rewrite, automatic publishing, or raw video deletion/move/overwrite.
 All TikTok outputs must pass the 9:16 hard guard before review, release, or publish readiness. A final 9:16 container is not enough; each segment must be checked for real vertical canvas, frame fill, black bars, stretch, and semantic crop risk.
+
+## P12E Semantic Compiler Contract
+
+P12D three-variant outputs are negative regression samples for business quality. They must not be deleted and must not be repackaged as success cases. The old P12D free Timeline Planner, filename/order-based planning, no-semantic replacement pool, and remaining nine-video generation are frozen for real runs. P12E entry points must not call the old free Planner.
+
+Every P12E commercial video plan must follow the three-stage protocol: Hook Zone, Core Transaction Zone, and Closure Zone. Core must choose exactly one skeleton: `pain -> intervention -> outcome`, `feature -> demonstration -> proof`, or `situation -> usage -> lifestyle_payoff`. Plans must explain why each visual slot was selected, what claim it supports, and how voiceover maps to visible evidence. Unexplained plans fail and must not render.
+
+The US market output contract is mandatory: `market=US`, `script_language=en-US`, `spoken_language=en-US`, `voice_locale=en-US`, `subtitle_language=en-US`, `fallback_to_system_default=false`, and `allow_windows_sapi_fallback=false`. Edge-TTS failures block audio and hold the variant; Windows SAPI must never be used as a silent fallback for P12E.
+
+Asset semantic indexing may create deterministic candidate windows, keyframe strip plans, and on-demand short proxy plans only under ignored outputs. It must never write sidecars, thumbnails, caches, or cuts into `raw_videos`.
+
+Real VLM semantic labeling requires `GATE_EXTERNAL_PROVIDER_ENABLE` before any media upload, API test, API key use, or paid call. VLM may describe, classify, and score assets, but it must not generate final timelines, publish, modify media, weaken hard rules, or override Owner decisions.

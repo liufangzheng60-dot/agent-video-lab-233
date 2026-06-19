@@ -14,6 +14,7 @@ from helpers.agent_factory_harness import (
     run_owner_review_packet,
     run_project_operator_status,
     run_project_resume,
+    run_p12e_semantic_compiler_preflight,
 )
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
@@ -118,6 +119,10 @@ def main() -> None:
     p12d_three_parser.add_argument("--product", required=True, help="Product slug.")
     p12d_three_parser.add_argument("--sku", required=True, help="SKU slug.")
     p12d_three_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
+    p12e_parser = subparsers.add_parser("p12e-preflight", help="运行 P12E 三段式语义编译器预检，并停在真实 VLM Owner Gate。")
+    p12e_parser.add_argument("--product", required=True, help="Product slug.")
+    p12e_parser.add_argument("--sku", required=True, help="SKU slug.")
+    p12e_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -529,6 +534,60 @@ def main() -> None:
         print("B. 先人工审查这 3 条，再修订计划")
         print("C. 停止")
         print("Codex 推荐：B")
+        return
+
+    if args.command == "p12e-preflight":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_p12e_semantic_compiler_preflight(repo_root, args.product, args.sku, args.material_batch)
+        if result["status"] != "owner_review_required":
+            print(f"P12E 预检被阻止：{result}")
+            raise SystemExit(1)
+        checkpoint = result["checkpoint"]
+        estimate = result["vlm_estimate"]
+        tts = result["tts_preflight"]
+        print("OWNER_REVIEW_REQUIRED")
+        print(f"检查点编号：{checkpoint['checkpoint_id']}")
+        print(f"检查点类型：{checkpoint['checkpoint_type']}")
+        print(f"当前目标：{checkpoint['current_goal']}")
+        print("已完成架构：美区英文输出合同、资产候选窗口索引、两级 VLM Schema/缓存/预算估算、三段式 Story Compiler")
+        print(f"旧自由 Planner 冻结状态：{checkpoint['old_free_planner_frozen']}")
+        print(f"P12D 负面样本登记结果：{len(checkpoint['p12d_negative_samples'])} 条")
+        print(f"Edge-TTS 安装结果：{result['edge_status']}")
+        print(f"可用 en-US Voice：{tts['contract']['allowed_voices']}")
+        print(f"最终选择 Voice：{checkpoint['selected_voice']}")
+        print(f"SAPI 静默回退状态：已禁止，allow_windows_sapi_fallback={tts['allow_windows_sapi_fallback']}")
+        print(f"美区输出合同结果：{tts['preflight_result']}")
+        print(f"候选窗口数量：{result['candidate_window_count']}")
+        print(f"Golden Pilot 候选原片数量：{result['golden_pilot_source_count']}")
+        print(f"Pass 1 预计请求数：{estimate['pass1_estimated_requests']}")
+        print(f"Pass 2 最大请求数：{estimate['pass2_max_requests']}")
+        print(f"预计上传关键帧数量：{estimate['estimated_keyframe_uploads']}")
+        print(f"预计上传短视频数量：{estimate['estimated_video_proxy_uploads']}")
+        print(f"是否上传音频：{estimate['upload_audio']}")
+        print(f"预计输入 Token：{estimate['estimated_input_tokens']}")
+        print(f"预计输出 Token：{estimate['estimated_output_tokens']}")
+        print(f"预计费用区间：{estimate['estimated_cost_range']}")
+        print(f"推荐 Provider：{estimate['provider']}")
+        print(f"推荐 Model：{estimate['model']}（真实调用前必须由配置和账号可用模型确认）")
+        print(f"推荐 media_resolution：{estimate['media_resolution']}")
+        print(f"max_calls：{estimate['max_calls']}")
+        print(f"max_budget：{estimate['max_budget']}")
+        print(f"缓存策略：cache_enabled={estimate['cache_enabled']}，同缓存键成功后不重复上传或收费调用")
+        print("上传的数据：低分辨率关键帧条带；仅对低置信度或动作 shortlist 上传短视频代理")
+        print("不上传的数据：完整原片、原片音频、高分辨率母文件、与 Golden Pilot 无关素材")
+        print(f"主要风险：{'; '.join(checkpoint['main_risks'])}")
+        print("测试结果：见本次 Codex 最终摘要")
+        print("回归测试结果：见本次 Codex 最终摘要")
+        print("Git 提交：见本次 Codex 最终摘要")
+        print("Git 推送结果：见本次 Codex 最终摘要")
+        print("请选择：")
+        print("A. 批准 Golden Pilot 的关键帧粗标签和必要短视频复核")
+        print("B. 只批准关键帧粗标签")
+        print("C. 不启用 VLM，停止自动语义剪辑方向")
+        print("D. 修订 Provider、Model、预算或上传范围")
+        print("Codex 推荐方案：A")
+        print("推荐理由：Pass 1 控制成本获取粗标签，Pass 2 只覆盖动作完整性和低置信度 shortlist，能避免再次无语义乱剪。")
+        print("Owner 可以直接回复：选择 A / 选择 B / 选择 C / 选择 D，并补充修改要求")
         return
 
     parser.print_help()

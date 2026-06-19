@@ -2,3 +2,4 @@
 # Do not install automatically during workspace initialization.
 pytest
 PyYAML
+edge-tts

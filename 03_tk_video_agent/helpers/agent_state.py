@@ -43,6 +43,10 @@ class AgentState:
     next_recommended_action: str | None = None
     vertical_output_guard_status: dict[str, Any] = field(default_factory=dict)
     segment_replacement_attempts: dict[str, int] = field(default_factory=dict)
+    frozen_runtime_paths: dict[str, Any] = field(default_factory=dict)
+    negative_regression_samples: list[dict[str, Any]] = field(default_factory=list)
+    market_output_contract: dict[str, Any] = field(default_factory=dict)
+    p12e_semantic_compiler_status: dict[str, Any] = field(default_factory=dict)
     created_at: str = field(default_factory=utc_now_iso)
     updated_at: str = field(default_factory=utc_now_iso)
 

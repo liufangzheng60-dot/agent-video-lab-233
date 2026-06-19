@@ -1377,3 +1377,15 @@ python main.py p12d-preflight --product dog_stairs_v1 --sku khaki --material-bat
 ```
 
 This command checks Git safety, counts raw videos, writes a read-only media inventory, runs laptop-safe resource preflight, runs a two-asset QC draft benchmark, runs the 9:16 known-failure regression, builds a deterministic candidate pool, and writes a 12-variant real batch plan. It does not render final videos, call real VLM, upload media, publish, or modify raw videos.
+
+## P12E Three-Stage Semantic Compiler
+
+P12E freezes the P12D free Timeline Planner for real runs and treats the three P12D validation videos as negative business-regression samples. The new path is visual-first: deterministic candidate windows, optional VLM semantic labels after Owner approval, a strict Hook/Core/Closure story compiler, and en-US Edge-TTS only.
+
+Preflight and real VLM gate:
+
+```bash
+python main.py p12e-preflight --product dog_stairs_v1 --sku khaki --material-batch batch_20260617_001
+```
+
+This command writes only ignored reports and state under `products/<product>/outputs/agent_factory/<material_batch>/`. It does not call real VLM, upload keyframes or video proxies, generate new videos, continue the remaining P12D videos, publish, modify raw videos, or use Windows SAPI fallback.

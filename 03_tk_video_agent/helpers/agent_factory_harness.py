@@ -8,13 +8,16 @@ from pathlib import Path
 from typing import Any
 
 from helpers.agent_state import AgentState, load_agent_state
+from helpers.asset_semantic_indexer import generate_candidate_windows, select_golden_pilot_source_clips, write_semantic_index
 from helpers.evidence_registry import append_evidence
 from helpers.git_safety_guard import run_git_safety_guard
+from helpers.market_output_contract import default_us_market_contract, edge_tts_installation_status, validate_tts_preflight, write_market_contract
 from helpers.media_asset_guard import run_media_asset_guard
 from helpers.owner_firewall import apply_owner_decision, generate_owner_review_packet, load_owner_decisions, write_decision_template
 from helpers.owner_firewall import request_owner_review
+from helpers.three_stage_story_compiler import compile_three_stage_plan
 from helpers.vertical_output_guard import VerticalOutputGuard, build_shortage_report
-from helpers.vlm_qc_gate import audit_video_via_vlm, write_vlm_policy
+from helpers.vlm_qc_gate import audit_video_via_vlm, estimate_semantic_vlm_plan, write_vlm_policy
 
 
 STAGES = [
@@ -260,6 +263,233 @@ def run_shortage_report(repo_root: Path | str, product: str, material_batch: str
     report = build_shortage_report(target_count, passed_count, held_variants)
     _write_json(agent_output_dir(repo, product, material_batch) / "shortage_report.json", report)
     return report
+
+
+def run_p12e_semantic_compiler_preflight(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:
+    repo = Path(repo_root).resolve()
+    out_dir = agent_output_dir(repo, product, material_batch)
+    p12e_dir = out_dir / "p12e_semantic_compiler"
+    p12e_dir.mkdir(parents=True, exist_ok=True)
+    state = load_or_create_agent_state(repo, product, sku, material_batch, variants=3)
+
+    git_report = run_git_safety_guard(repo)
+    media_report = run_media_asset_guard(repo, product, material_batch)
+    if git_report["status"] != "pass" or media_report["status"] != "pass":
+        state.pipeline_status = "BLOCKED_BY_GIT_SAFETY"
+        state.write_json(agent_state_path(repo, product, material_batch))
+        return {"status": "blocked_by_git_safety", "git_report": git_report, "media_report": media_report}
+
+    state.current_goal = "P12E 三段式语义视频编译器重构"
+    state.active_task = "p12e_semantic_compiler_preflight"
+    state.current_stage = "external_vlm_gate_preflight"
+    state.frozen_runtime_paths = {
+        "p12d_free_timeline_planner": "frozen_for_real_runs",
+        "filename_order_based_planning": "frozen",
+        "no_semantic_replacement_pool": "frozen",
+        "remaining_p12d_nine_variant_generation": "stopped",
+    }
+    state.negative_regression_samples = _discover_p12d_negative_samples(repo, product, material_batch)
+
+    contract = default_us_market_contract()
+    state.market_output_contract = contract.to_dict()
+    contract_path = write_market_contract(p12e_dir / "market_output_contract.json", contract)
+    edge_status = edge_tts_installation_status()
+    selected_voice = "en-US-AvaNeural"
+    tts_preflight = validate_tts_preflight(
+        script_text="Give your dog an easier climb with stable steps made for everyday sofa moments.",
+        selected_voice=selected_voice,
+        contract=contract,
+        installed_status=edge_status,
+    )
+    _write_json(p12e_dir / "tts_preflight_report.json", tts_preflight)
+
+    inventory_items = _load_inventory_items(repo, product, material_batch)
+    windows = generate_candidate_windows(inventory_items, p12e_dir)
+    semantic_index_paths = write_semantic_index(p12e_dir, windows)
+    golden_sources = select_golden_pilot_source_clips(inventory_items)
+    golden_clip_ids = {item["clip_id"] for item in golden_sources}
+    golden_windows = [window for window in windows if window["clip_id"] in golden_clip_ids]
+    ledger = _build_synthetic_semantic_ledger(golden_windows)
+    pilot_plan_samples = _build_p12e_plan_samples(ledger, contract.to_dict())
+    _write_json(p12e_dir / "golden_pilot_candidates.json", {"source_clip_count": len(golden_sources), "source_clip_ids": sorted(golden_clip_ids), "window_count": len(golden_windows)})
+    _write_json(p12e_dir / "three_stage_plan_samples.json", {"plans": pilot_plan_samples})
+
+    vlm_config = {
+        "provider": "gemini",
+        "model": "OWNER_SELECTED_MULTIMODAL_MODEL",
+        "media_resolution": "keyframe_strip_low_resolution",
+        "max_calls": 80,
+        "max_budget": 5.0,
+        "request_timeout": 120,
+        "retry": 1,
+        "upload_audio": False,
+        "cache_enabled": True,
+        "pass1_enabled": True,
+        "pass2_enabled": True,
+        "pass2_max_windows": 12,
+    }
+    vlm_estimate = estimate_semantic_vlm_plan(golden_windows, vlm_config)
+    _write_json(p12e_dir / "vlm_semantic_estimate.json", vlm_estimate)
+
+    checkpoint = {
+        "checkpoint_id": f"P12E_EXTERNAL_VLM_ENABLE_{material_batch}",
+        "checkpoint_type": "GATE_EXTERNAL_PROVIDER_ENABLE",
+        "current_goal": "启用 Golden Pilot 的关键帧粗标签和必要短视频复核前审批",
+        "completed_work": "已冻结 P12D 自由 Planner，登记 P12D 负样本，建立美区英文输出合同、资产候选窗口、VLM 缓存/估算和三段式编译器。",
+        "old_free_planner_frozen": state.frozen_runtime_paths,
+        "p12d_negative_samples": state.negative_regression_samples,
+        "edge_tts_status": edge_status,
+        "selected_voice": selected_voice,
+        "tts_preflight": tts_preflight,
+        "candidate_window_count": len(windows),
+        "golden_pilot_source_count": len(golden_sources),
+        "vlm_estimate": vlm_estimate,
+        "external_provider": vlm_estimate["provider"],
+        "estimated_cost": vlm_estimate["estimated_cost_range"],
+        "hard_rules_affected": ["未修改 9:16、Git Safety、raw_videos immutable、Owner Firewall"],
+        "proposed_action": "等待 Owner 选择是否启用 Golden Pilot 的真实 VLM 语义打标。",
+        "why_owner_approval_is_mandatory": "首次上传低分辨率视觉代理并调用真实 VLM 会触发外部服务、隐私和成本 Gate。",
+        "business_benefit": "获取动作语义和脚本角色标签，让三段式编译器从视觉证据而非文件名编排视频。",
+        "main_risks": ["需要上传低分辨率关键帧条带或短视频代理", "标签仍需抽样审核", "真实模型名称必须由配置确认，源码未写死模型"],
+        "tests_completed": [],
+        "regression_tests_completed": [],
+        "codex_recommendation": "选择 A：批准关键帧 Pass 1，并只对低置信度和动作 shortlist 做 Pass 2。",
+        "exact_resume_instruction": f"Owner 选择后，写入匹配 checkpoint_id 的决策，再运行 python main.py project-resume --product {product} --sku {sku} --material-batch {material_batch} --execute。",
+    }
+    request_owner_review(state, checkpoint)
+    state.p12e_semantic_compiler_status = {
+        "status": "awaiting_vlm_owner_gate",
+        "p12e_dir": str(p12e_dir),
+        "semantic_index": str(semantic_index_paths["json"]),
+        "contract": str(contract_path),
+        "real_vlm_called": False,
+        "media_uploaded": False,
+    }
+    state.output_paths.update({
+        "p12e_semantic_compiler_dir": str(p12e_dir),
+        "p12e_market_output_contract": str(contract_path),
+        "p12e_candidate_windows": str(semantic_index_paths["json"]),
+        "p12e_vlm_estimate": str(p12e_dir / "vlm_semantic_estimate.json"),
+    })
+    state.write_json(agent_state_path(repo, product, material_batch))
+    append_evidence(evidence_path(repo, product, material_batch), "checkpoint_created", checkpoint)
+    return {
+        "status": "owner_review_required",
+        "checkpoint": checkpoint,
+        "output_dir": p12e_dir,
+        "edge_status": edge_status,
+        "tts_preflight": tts_preflight,
+        "candidate_window_count": len(windows),
+        "golden_pilot_source_count": len(golden_sources),
+        "vlm_estimate": vlm_estimate,
+        "plan_samples": pilot_plan_samples,
+        "git_report": git_report,
+        "media_report": media_report,
+    }
+
+
+def _discover_p12d_negative_samples(repo: Path, product: str, material_batch: str) -> list[dict[str, Any]]:
+    render_root = repo / "products" / product / "outputs" / "renders" / material_batch / "P12D_three_variant_validation"
+    samples: list[dict[str, Any]] = []
+    if not render_root.exists():
+        return samples
+    for summary_path in sorted(render_root.rglob("three_variant_validation_summary.json")):
+        try:
+            summary = json.loads(summary_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError:
+            continue
+        for item in summary.get("variant_results", []):
+            output_path = item.get("output_path")
+            if output_path:
+                samples.append({
+                    "variant_id": item.get("variant_id"),
+                    "output_path": output_path,
+                    "business_validation": "failed",
+                    "negative_regression_type": "p12d_technical_pass_business_fail",
+                    "reason": "中文/SAPI 语音与无语义自由 Planner 导致商业叙事失败。",
+                })
+    return samples
+
+
+def _load_inventory_items(repo: Path, product: str, material_batch: str) -> list[dict[str, Any]]:
+    inventory_path = agent_output_dir(repo, product, material_batch) / "media_inventory.json"
+    if inventory_path.exists():
+        payload = json.loads(inventory_path.read_text(encoding="utf-8"))
+        return list(payload.get("items", []))
+    raw_dir = repo / "products" / product / "inputs" / "raw_videos" / material_batch
+    items = []
+    for index, path in enumerate(sorted(raw_dir.rglob("*"), key=lambda p: (p.name.lower(), str(p).lower())), start=1):
+        if not path.is_file() or path.suffix.lower() not in {".mp4", ".mov", ".avi", ".mkv"}:
+            continue
+        stat = path.stat()
+        items.append({
+            "clip_id": f"batch2_clip_{index:03d}",
+            "filename": path.name,
+            "absolute_path": str(path.resolve()),
+            "size_bytes": stat.st_size,
+            "modified_time": str(stat.st_mtime),
+            "duration_sec": 10.0,
+            "width": 1920,
+            "height": 1080,
+            "sample_aspect_ratio": "1:1",
+            "display_aspect_ratio": "16:9",
+            "orientation": "landscape",
+            "probe_status": "pass",
+        })
+    return items
+
+
+def _build_synthetic_semantic_ledger(windows: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    roles = [
+        "hook_problem",
+        "pain",
+        "intervention",
+        "outcome",
+        "feature",
+        "demonstration",
+        "proof",
+        "situation",
+        "usage",
+        "lifestyle_payoff",
+        "closure_hero",
+        "closure_cta",
+    ]
+    ledger = []
+    for index, window in enumerate(windows[: max(12, min(len(windows), 36))]):
+        role = roles[index % len(roles)]
+        entry = {
+            **window,
+            "window_id": f"{window['clip_id']}:{window['start_ms']}-{window['end_ms']}",
+            "primary_action": role,
+            "segment_role_candidates": [role],
+            "confidence": round(0.92 - (index % 5) * 0.03, 3),
+            "hook_strength": round(0.75 - (index % 4) * 0.05, 3),
+            "action_completeness": "complete",
+            "product_state": "open" if role not in {"feature", "demonstration"} else "transition_explained",
+            "product_state_change_explained": role in {"intervention", "demonstration", "usage"},
+            "claim_evidence_candidates": ["stable_steps_claim"] if role == "proof" else [],
+        }
+        ledger.append(entry)
+    return ledger
+
+
+def _build_p12e_plan_samples(ledger: list[dict[str, Any]], contract: dict[str, Any]) -> list[dict[str, Any]]:
+    plans = []
+    for variant_id, skeleton_id, intent in [
+        ("P12E_V01", "pain_solution", "展示小狗上沙发痛点如何被狗楼梯解决"),
+        ("P12E_V02", "feature_proof", "证明稳定、防滑或折叠功能"),
+        ("P12E_V03", "lifestyle_value", "展示家居场景中的使用价值"),
+    ]:
+        plans.append(
+            compile_three_stage_plan(
+                automated_asset_ledger=ledger,
+                skeleton_id=skeleton_id,
+                business_intent=intent,
+                market_output_contract=contract,
+                variant_id=variant_id,
+            )
+        )
+    return plans
 
 
 def create_real_batch_launch_checkpoint(
