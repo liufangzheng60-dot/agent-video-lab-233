@@ -18,6 +18,15 @@ from helpers.owner_firewall import request_owner_review
 from helpers.three_stage_story_compiler import compile_three_stage_plan
 from helpers.vertical_output_guard import VerticalOutputGuard, build_shortage_report
 from helpers.vlm_qc_gate import audit_video_via_vlm, estimate_semantic_vlm_plan, write_vlm_policy
+from helpers.zhipu_vlm_adapter import (
+    ZHIPU_BASE_URL,
+    ZHIPU_MODEL,
+    ZHIPU_PROVIDER,
+    build_calibration_request_plan,
+    build_package_compatibility_report,
+    inspect_zhipu_environment,
+    write_blocked_calibration_reports,
+)
 
 
 STAGES = [
@@ -385,6 +394,151 @@ def run_p12e_semantic_compiler_preflight(repo_root: Path | str, product: str, sk
         "plan_samples": pilot_plan_samples,
         "git_report": git_report,
         "media_report": media_report,
+    }
+
+
+def run_p12h_zhipu_calibration_preflight(repo_root: Path | str, product: str, sku: str, material_batch: str) -> dict[str, Any]:
+    """Prepare P12H reports and Owner Gate without exceeding calibration authorization."""
+    repo = Path(repo_root).resolve()
+    out_dir = agent_output_dir(repo, product, material_batch)
+    p12h_dir = out_dir / "p12h_zhipu_glm46v_calibration"
+    p12h_dir.mkdir(parents=True, exist_ok=True)
+    state = load_or_create_agent_state(repo, product, sku, material_batch, variants=3)
+    git_report = run_git_safety_guard(repo)
+    media_report = run_media_asset_guard(repo, product, material_batch)
+    if git_report["status"] != "pass" or media_report["status"] != "pass":
+        state.pipeline_status = "BLOCKED_BY_GIT_SAFETY"
+        state.write_json(agent_state_path(repo, product, material_batch))
+        return {"status": "blocked_by_git_safety", "git_report": git_report, "media_report": media_report}
+
+    comet_audit = build_comet_reference_audit(repo, product, material_batch)
+    env_report = inspect_zhipu_environment()
+    package_report = build_package_compatibility_report()
+    samples = _select_p12h_calibration_samples(repo, product, material_batch)
+    request_plan = build_calibration_request_plan(samples)
+    report_paths = write_blocked_calibration_reports(
+        p12h_dir,
+        env_report=env_report,
+        package_report=package_report,
+        request_plan=request_plan,
+        comet_audit=comet_audit,
+    )
+    checkpoint_type = "GATE_ZHIPU_PACKAGE_CONFIRMATION" if not package_report["can_run_real_calibration"] else "GATE_ZHIPU_GLM46V_CALIBRATION_REVIEW"
+    if not env_report["api_key_available"]:
+        checkpoint_type = "GATE_ZHIPU_PACKAGE_CONFIRMATION"
+    checkpoint = {
+        "checkpoint_id": f"P12H_ZHIPU_GLM46V_CALIBRATION_REVIEW_{material_batch}",
+        "checkpoint_type": checkpoint_type,
+        "current_goal": "P12H 智谱 glm-4.6v Calibration 门禁复核",
+        "actual_provider": ZHIPU_PROVIDER,
+        "actual_model": ZHIPU_MODEL,
+        "api_endpoint": ZHIPU_BASE_URL,
+        "sdk_status": env_report["sdk_status"],
+        "api_key_status": env_report["python_key_status"],
+        "comet_clone_result": comet_audit.get("clone_result"),
+        "comet_reference_audit_result": comet_audit.get("status"),
+        "comet_installed_or_integrated": False,
+        "resource_pack": package_report,
+        "calibration_sample_count": request_plan["planned_request_count"],
+        "real_api_called": False,
+        "media_uploaded": False,
+        "report_paths": report_paths | {"comet_reference_audit": comet_audit["report_path"]},
+        "why_owner_approval_is_mandatory": "当前无法从本地确认资源包覆盖和现金扣费风险，且 API Key 未在会话中设置；不得执行真实 Calibration。",
+        "codex_recommendation": "先在智谱控制台确认资源包覆盖 glm-4.6v、图片/视频 Token 抵扣和套餐外现金扣费关闭，再在本机环境变量设置 ZAI_API_KEY。",
+        "exact_resume_instruction": f"确认后重新运行 python main.py p12h-calibration --product {product} --sku {sku} --material-batch {material_batch}",
+    }
+    request_owner_review(state, checkpoint)
+    state.current_goal = "P12H Comet 参考审计与智谱 glm-4.6v Calibration"
+    state.active_task = "p12h_zhipu_calibration_preflight"
+    state.current_stage = "blocked_by_zhipu_package_or_api_key_gate"
+    state.output_paths.update(checkpoint["report_paths"])
+    state.write_json(agent_state_path(repo, product, material_batch))
+    append_evidence(evidence_path(repo, product, material_batch), "checkpoint_created", checkpoint)
+    return {
+        "status": "owner_review_required",
+        "checkpoint": checkpoint,
+        "output_dir": p12h_dir,
+        "env_report": env_report,
+        "package_report": package_report,
+        "request_plan": request_plan,
+        "comet_audit": comet_audit,
+        "git_report": git_report,
+        "media_report": media_report,
+    }
+
+
+def build_comet_reference_audit(repo: Path, product: str, material_batch: str) -> dict[str, Any]:
+    comet_dir = Path(r"C:\Users\43871\AppData\Local\LFZ_CODE\external_references\comet")
+    out_dir = agent_output_dir(repo, product, material_batch) / "p12h_zhipu_glm46v_calibration"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    report_path = out_dir / "comet_reference_audit.md"
+    clone_result = {"exists": comet_dir.exists(), "path": str(comet_dir)}
+    if comet_dir.exists():
+        clone_result.update({
+            "remote": _git_text(comet_dir, ["remote", "get-url", "origin"]),
+            "branch": _git_text(comet_dir, ["rev-parse", "--abbrev-ref", "HEAD"]),
+            "commit": _git_text(comet_dir, ["rev-parse", "HEAD"]),
+        })
+    lines = [
+        "# Comet 外部只读参考审计",
+        "",
+        f"- 外部目录：{comet_dir}",
+        f"- 克隆状态：{clone_result}",
+        "- 本轮未安装、未初始化、未移植、未接入活动仓库。",
+        "",
+        "## 1. 可以借鉴",
+        "- 状态恢复：用显式状态字段记录 phase、handoff、verification report，避免恢复时猜测。",
+        "- Phase Guard：进入和退出阶段都检查前置条件、状态一致性和验证证据。",
+        "- 上下文压缩：handoff 包用摘要加哈希引用，降低长任务恢复成本。",
+        "- 任务交接：设计交接包记录来源路径和 hash，方便后续审计。",
+        "- 验证证据：阶段推进必须有实际测试或报告文件支撑。",
+        "",
+        "## 2. 当前项目已经拥有",
+        "- AGENTS.md、Owner Firewall、Phase Guard、agent_state、Git Safety、Media Asset Guard、ResourceGovernor、Evidence Registry。",
+        "",
+        "## 3. 当前不应接入",
+        "- 不安装 Comet，不创建 `.comet.yaml` 或 `.openspec.yaml`，不复制 Skills，不替换本项目 Owner Firewall 或 agent_state 主权。",
+        "",
+        "## 4. 未来重新评估条件",
+        "- 当本项目需要跨多仓库、多长期规格变更和正式 spec archive 流程时，再评估是否借鉴其脚本化 guard 思路。",
+        "",
+        "## 5. 明确结论",
+        "- 本轮仅外部浅克隆并只读审计，未安装、未初始化、未移植。",
+    ]
+    report_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return {"status": "pass", "clone_result": clone_result, "report_path": str(report_path)}
+
+
+def _select_p12h_calibration_samples(repo: Path, product: str, material_batch: str) -> list[dict[str, Any]]:
+    p12e_windows_path = agent_output_dir(repo, product, material_batch) / "p12e_semantic_compiler" / "semantic_index" / "candidate_windows.json"
+    windows: list[dict[str, Any]] = []
+    if p12e_windows_path.exists():
+        payload = json.loads(p12e_windows_path.read_text(encoding="utf-8"))
+        windows = list(payload.get("windows", []))
+    if not windows:
+        inventory = _load_inventory_items(repo, product, material_batch)
+        windows = generate_candidate_windows(inventory, agent_output_dir(repo, product, material_batch) / "p12h_zhipu_glm46v_calibration")
+    ordered = sorted(windows, key=lambda item: (str(item.get("source_filename", "")).lower(), int(item.get("start_ms", 0)), str(item.get("clip_id", ""))))
+    samples: list[dict[str, Any]] = []
+    if ordered:
+        samples.append(_sample_from_window(ordered[0], "static_product_keyframe_strip", "keyframe_strip"))
+    if len(ordered) > 1:
+        samples.append(_sample_from_window(ordered[min(1, len(ordered) - 1)], "dog_usage_keyframe_strip", "keyframe_strip"))
+    if len(ordered) > 2:
+        samples.append(_sample_from_window(ordered[min(2, len(ordered) - 1)], "action_video_proxy", "low_fps_video_proxy"))
+    return samples[:3]
+
+
+def _sample_from_window(window: dict[str, Any], sample_type: str, input_type: str) -> dict[str, Any]:
+    return {
+        "sample_type": sample_type,
+        "clip_id": window["clip_id"],
+        "asset_hash": window.get("content_hash") or window.get("clip_id"),
+        "start_ms": int(window.get("start_ms", 0)),
+        "end_ms": int(window.get("end_ms", 0)),
+        "input_type": input_type,
+        "media_resolution": "keyframe_strip_low_resolution" if input_type == "keyframe_strip" else "360x640_6fps_proxy",
+        "proxy_version": "p12h_v1",
     }
 
 

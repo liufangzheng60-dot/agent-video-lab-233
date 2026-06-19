@@ -15,6 +15,7 @@ from helpers.agent_factory_harness import (
     run_project_operator_status,
     run_project_resume,
     run_p12e_semantic_compiler_preflight,
+    run_p12h_zhipu_calibration_preflight,
 )
 from helpers.build_material_pack import run_material_pack
 from helpers.experiment_racing import run_experiment_init
@@ -123,6 +124,10 @@ def main() -> None:
     p12e_parser.add_argument("--product", required=True, help="Product slug.")
     p12e_parser.add_argument("--sku", required=True, help="SKU slug.")
     p12e_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
+    p12h_parser = subparsers.add_parser("p12h-calibration", help="运行 P12H Comet 只读审计与智谱 glm-4.6v Calibration 门禁预检。")
+    p12h_parser.add_argument("--product", required=True, help="Product slug.")
+    p12h_parser.add_argument("--sku", required=True, help="SKU slug.")
+    p12h_parser.add_argument("--material-batch", required=True, help="Material batch ID.")
 
     args = parser.parse_args()
     project_root = Path(__file__).resolve().parent
@@ -588,6 +593,64 @@ def main() -> None:
         print("Codex 推荐方案：A")
         print("推荐理由：Pass 1 控制成本获取粗标签，Pass 2 只覆盖动作完整性和低置信度 shortlist，能避免再次无语义乱剪。")
         print("Owner 可以直接回复：选择 A / 选择 B / 选择 C / 选择 D，并补充修改要求")
+        return
+
+    if args.command == "p12h-calibration":
+        repo_root = repo_root_from_agent_root(project_root)
+        result = run_p12h_zhipu_calibration_preflight(repo_root, args.product, args.sku, args.material_batch)
+        if result["status"] != "owner_review_required":
+            print(f"P12H 被阻止：{result}")
+            raise SystemExit(1)
+        checkpoint = result["checkpoint"]
+        package = result["package_report"]
+        env = result["env_report"]
+        plan = result["request_plan"]
+        paths = checkpoint["report_paths"]
+        print("OWNER_REVIEW_REQUIRED")
+        print(f"检查点编号：{checkpoint['checkpoint_id']}")
+        print(f"实际Provider：{checkpoint['actual_provider']}")
+        print(f"实际Model：{checkpoint['actual_model']}")
+        print(f"API端点：{checkpoint['api_endpoint']}")
+        print(f"SDK名称和版本：{env['sdk_status']}")
+        print(f"API Key状态：{env['python_key_status']}")
+        print(f"Comet克隆结果：{checkpoint['comet_clone_result']}")
+        print(f"Comet参考审计结果：{checkpoint['comet_reference_audit_result']}")
+        print("Comet是否被安装或接入：否")
+        print(f"资源包名称：{package['resource_pack_name']}")
+        print(f"资源包有效期：{package['package_expiration']}")
+        print(f"资源包是否覆盖glm-4.6v：{package['glm_4_6v_included']}")
+        print(f"图片Token是否覆盖：{package['image_tokens_included']}")
+        print(f"视频Token是否覆盖：{package['video_tokens_included']}")
+        print(f"套餐外现金扣费风险：{package['cash_charge_possible']}")
+        print(f"Calibration样本数量：{plan['planned_request_count']}")
+        print("图片调用成功/失败：0 / 0，因 API Key 或资源包门禁未满足，未调用")
+        print("视频调用成功/失败：0 / 0，因 API Key 或资源包门禁未满足，未调用")
+        print("Function Call可用性：未探测")
+        print("最终结构化输出策略：未调用前保持候选策略，优先 Function Call，失败后 JSON-only Prompt")
+        print("Schema成功率：0.0，未执行真实 Calibration")
+        print("产品状态识别结果：未执行")
+        print("狗使用动作识别结果：未执行")
+        print("动作完整性判断结果：未执行")
+        print("脚本角色判断结果：未执行")
+        print("缓存测试结果：已生成 cache_key 计划，未产生真实调用")
+        print("输入Token：0")
+        print("输出Token：0")
+        print("视觉Token：0")
+        print("视频Token：0")
+        print("资源包扣减：未执行")
+        print("现金费用：0")
+        print("平均请求延迟：未执行")
+        print("失败和重试次数：0")
+        print("主要问题：缺少 ZAI_API_KEY/ZHIPUAI_API_KEY；资源包覆盖和现金扣费风险需要 Owner 在智谱控制台确认")
+        print(f"报告路径：{paths}")
+        print("请选择：")
+        print("A. Calibration通过，批准glm-4.6v运行完整Golden Pilot标签")
+        print("B. 只批准glm-4.6v运行Pass 1关键帧标签")
+        print("C. 修订Prompt或Schema后重新Calibration")
+        print("D. 修改视频代理输入方式后重新Calibration")
+        print("E. 停止智谱VLM方向")
+        print("Codex 推荐：先不要选择 A/B；请先在本机设置 ZAI_API_KEY，并在智谱控制台确认资源包覆盖和套餐外现金扣费风险，再重新运行 Calibration。")
+        print("安全设置示例：$env:ZAI_API_KEY = \"在本机填写，不要发送到对话中\"")
         return
 
     parser.print_help()
