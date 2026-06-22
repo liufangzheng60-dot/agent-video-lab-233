@@ -468,7 +468,7 @@ def run_p12h_zhipu_calibration_preflight(repo_root: Path | str, product: str, sk
 
 
 def build_comet_reference_audit(repo: Path, product: str, material_batch: str) -> dict[str, Any]:
-    comet_dir = Path(r"C:\Users\43871\AppData\Local\LFZ_CODE\external_references\comet")
+    comet_dir = Path(os.environ.get("COMET_REFERENCE_DIR") or (repo / "00_references" / "comet"))
     out_dir = agent_output_dir(repo, product, material_batch) / "p12h_zhipu_glm46v_calibration"
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "comet_reference_audit.md"

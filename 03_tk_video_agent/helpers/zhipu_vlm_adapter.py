@@ -8,11 +8,12 @@ confirmation gates are not satisfied.
 from __future__ import annotations
 
 import importlib.metadata
+import hashlib
 import json
 import os
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 
 from helpers.agent_state import utc_now_iso
 from helpers.vlm_qc_gate import SEMANTIC_LABEL_SCHEMA_VERSION, build_semantic_vlm_cache_key
@@ -21,6 +22,17 @@ from helpers.vlm_qc_gate import SEMANTIC_LABEL_SCHEMA_VERSION, build_semantic_vl
 ZHIPU_PROVIDER = "zhipu"
 ZHIPU_MODEL = "glm-4.6v"
 ZHIPU_BASE_URL = "https://open.bigmodel.cn/api/paas/v4/"
+ZAI_KEY_ENV_VAR = "ZAI_API_KEY"
+ZAI_KEY_FINGERPRINT_ENV_VAR = "ZAI_KEY_FINGERPRINT_EXPECTED"
+ZHIPU_SINGLE_KEY_SOURCE_INVARIANT = {
+    "provider": ZHIPU_PROVIDER,
+    "model": ZHIPU_MODEL,
+    "key_source": ZAI_KEY_ENV_VAR,
+    "base_url": ZHIPU_BASE_URL,
+    "credential_fallback": False,
+    "model_fallback": False,
+    "provider_fallback": False,
+}
 
 
 @dataclass(frozen=True)
@@ -42,20 +54,33 @@ class ZhipuCalibrationConfig:
         return asdict(self)
 
 
-def inspect_zhipu_environment() -> dict[str, Any]:
-    zai_key = os.environ.get("ZAI_API_KEY") or ""
-    compat_key = os.environ.get("ZHIPUAI_API_KEY") or ""
-    selected_name = "ZAI_API_KEY" if zai_key else ("ZHIPUAI_API_KEY" if compat_key else None)
-    selected_value = zai_key or compat_key
+def inspect_zhipu_environment(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    active_env = os.environ if env is None else env
+    zai_key = active_env.get(ZAI_KEY_ENV_VAR) or ""
     return {
         "python_key_status": {
-            "ZAI_API_KEY": _key_status(zai_key),
-            "ZHIPUAI_API_KEY": _key_status(compat_key),
-            "selected_env_var": selected_name,
+            ZAI_KEY_ENV_VAR: _key_status(zai_key),
+            "selected_env_var": ZAI_KEY_ENV_VAR if zai_key else None,
+            "credential_fallback": False,
         },
         "sdk_status": inspect_zai_sdk(),
         "legacy_zhipuai_status": inspect_legacy_zhipuai(),
-        "api_key_available": bool(selected_value),
+        "single_key_source_invariant": ZHIPU_SINGLE_KEY_SOURCE_INVARIANT,
+        "api_key_available": bool(zai_key),
+    }
+
+
+def verify_zai_key_fingerprint(env: Mapping[str, str] | None = None) -> dict[str, Any]:
+    active_env = os.environ if env is None else env
+    key = active_env.get(ZAI_KEY_ENV_VAR) or ""
+    expected = active_env.get(ZAI_KEY_FINGERPRINT_ENV_VAR) or ""
+    actual = hashlib.sha256(key.encode("utf-8")).hexdigest() if key else ""
+    return {
+        "zai_api_key_exists": bool(key),
+        "zai_api_key_length": len(key),
+        "expected_fingerprint_exists": bool(expected),
+        "fingerprint_matches": bool(key and expected and actual == expected.lower()),
+        "secret_value_logged": False,
     }
 
 
@@ -174,7 +199,7 @@ def write_blocked_calibration_reports(output_dir: Path | str, *, env_report: dic
         "sdk": env_report["sdk_status"],
         "api_key_status": env_report["python_key_status"],
         "real_api_called": False,
-        "blockers": [] if env_report["api_key_available"] else ["ZAI_API_KEY 和 ZHIPUAI_API_KEY 均不存在，已停止真实 API 调用。"],
+        "blockers": [] if env_report["api_key_available"] else ["ZAI_API_KEY is missing; credential fallback is forbidden and real API calls remain stopped."],
         "created_at": utc_now_iso(),
     }
     results = {
@@ -220,9 +245,8 @@ def write_blocked_calibration_reports(output_dir: Path | str, *, env_report: dic
 
 def _key_status(value: str) -> dict[str, Any]:
     if not value:
-        return {"exists": False, "length": 0, "masked": ""}
-    masked = value[:4] + "..." + value[-4:] if len(value) >= 8 else "***"
-    return {"exists": True, "length": len(value), "masked": masked}
+        return {"exists": False, "length": 0, "value_logged": False}
+    return {"exists": True, "length": len(value), "value_logged": False}
 
 
 def _review_markdown(env_report: dict[str, Any], package_report: dict[str, Any], request_plan: dict[str, Any], comet_audit: dict[str, Any]) -> str:
@@ -242,5 +266,5 @@ def _review_markdown(env_report: dict[str, Any], package_report: dict[str, Any],
     for blocker in package_report["blockers"]:
         lines.append(f"- {blocker}")
     if not env_report["api_key_available"]:
-        lines.append("- 本机当前会话未设置 ZAI_API_KEY 或 ZHIPUAI_API_KEY。")
+        lines.append("- 本机当前会话未设置 ZAI_API_KEY；凭证 fallback 已禁止。")
     return "\n".join(lines) + "\n"
