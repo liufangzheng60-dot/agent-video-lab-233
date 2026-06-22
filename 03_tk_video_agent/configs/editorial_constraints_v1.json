@@ -1,0 +1,43 @@
+{
+  "spec_version": "P12S-v1",
+  "human_visibility_policy": {
+    "default_action": "reject",
+    "allowed_contexts": [
+      "opening_hook",
+      "product_transformation"
+    ],
+    "opening_hook_max_ms": 800,
+    "transformation_max_ms": 1500,
+    "face_allowed": false,
+    "body_allowed": false,
+    "hand_after_hook_allowed": false
+  },
+  "owner_preferences": {
+    "prioritize_flow_over_forced_brevity": true,
+    "reject_hands_by_default": true,
+    "allow_hand_only_for_hook_or_transformation": true,
+    "reject_truncated_actions": true,
+    "prefer_complete_motion": true,
+    "avoid_showroom_feel": true,
+    "prefer_restrained_high_end_style": true,
+    "avoid_gimmicky_transitions": true,
+    "allow_duration_up_to_24s_when_justified": true
+  },
+  "kinematic_policy": {
+    "dog_max_playback_speed": 1.08,
+    "product_transformation_max_playback_speed": 1.25,
+    "default_preroll_ms": 220,
+    "default_postroll_ms": 320,
+    "l_cut_range_ms": [150, 450],
+    "j_cut_range_ms": [120, 350],
+    "macro_product_l_cut_max_ms": 600
+  },
+  "duration_policy": {
+    "legal_min_ms": 13000,
+    "legal_max_ms": 24000,
+    "fast_max_ms": 16000,
+    "standard_max_ms": 21000,
+    "tail_reverb_min_ms": 150,
+    "tail_reverb_max_ms": 400
+  }
+}

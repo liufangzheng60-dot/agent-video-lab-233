@@ -1,0 +1,17 @@
+{
+  "spec_version": "P12U-v1",
+  "provider": "zhipu",
+  "model": "glm-4.6v",
+  "per_six_video_budget_tokens": {
+    "soft": 500000,
+    "quality_escalation": 1000000,
+    "hard_ceiling": 1500000
+  },
+  "allocation": {
+    "full_scene_coarse_label": 0.2,
+    "dynamic_candidate_deep_review": 0.25,
+    "storyboard_rerank": 0.25,
+    "final_full_cut_review": 0.2,
+    "retry_and_dispute": 0.1
+  }
+}

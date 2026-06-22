@@ -1,0 +1,31 @@
+{
+  "spec_version": "P12X-v2",
+  "beam_width": 45,
+  "per_slot_top_k": 8,
+  "families": [
+    "P12W Baseline",
+    "Narrative-First",
+    "Coverage-Rich",
+    "Cinematic-Global"
+  ],
+  "motion_continuity": {
+    "default_weight": 0.04,
+    "max_weight": 0.06,
+    "low_confidence_zeroed_below": 0.6,
+    "camera_motion_primary_method": "feature_points_sparse_lk_ransac_affine",
+    "farneback_scope": "local_residual_subject_motion_cross_check_only",
+    "forbidden": "full_frame_average_farneback_vector_as_camera_pan"
+  },
+  "dominance": {
+    "video_dominance_margin_min": 6,
+    "required_core_metric_improvements": 3,
+    "fallback_to_p12w_when_not_dominant": true
+  },
+  "guardrails": {
+    "p12w_is_candidate0": true,
+    "p12w_participates_final_competition": true,
+    "same_shot_scale_is_not_auto_jump_cut": true,
+    "vlm_cannot_generate_ffmpeg_or_cutpoints": true,
+    "preserve_zero_freeze_pts_single_cfr_av_sync": true
+  }
+}

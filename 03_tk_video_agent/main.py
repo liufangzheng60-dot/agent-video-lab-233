@@ -641,7 +641,7 @@ def main() -> None:
         print("现金费用：0")
         print("平均请求延迟：未执行")
         print("失败和重试次数：0")
-        print("主要问题：缺少 ZAI_API_KEY/ZHIPUAI_API_KEY；资源包覆盖和现金扣费风险需要 Owner 在智谱控制台确认")
+        print("主要问题：缺少 ZHIPU_API_KEY；资源包覆盖和现金扣费风险需要 Owner 在智谱控制台确认")
         print(f"报告路径：{paths}")
         print("请选择：")
         print("A. Calibration通过，批准glm-4.6v运行完整Golden Pilot标签")
@@ -649,8 +649,8 @@ def main() -> None:
         print("C. 修订Prompt或Schema后重新Calibration")
         print("D. 修改视频代理输入方式后重新Calibration")
         print("E. 停止智谱VLM方向")
-        print("Codex 推荐：先不要选择 A/B；请先在本机设置 ZAI_API_KEY，并在智谱控制台确认资源包覆盖和套餐外现金扣费风险，再重新运行 Calibration。")
-        print("安全设置示例：$env:ZAI_API_KEY = \"在本机填写，不要发送到对话中\"")
+        print("Codex 推荐：先不要选择 A/B；请先在本机设置 ZHIPU_API_KEY，并在智谱控制台确认资源包覆盖和套餐外现金扣费风险，再重新运行 Calibration。")
+        print("安全设置示例：$env:ZHIPU_API_KEY = \"在本机填写，不要发送到对话中\"")
         return
 
     parser.print_help()

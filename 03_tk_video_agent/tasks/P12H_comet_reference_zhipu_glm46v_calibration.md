@@ -1,0 +1,1651 @@
+﻿# TASK：P12H_COMET_REFERENCE_AND_ZHIPU_GLM46V_CALIBRATION
+
+
+
+spec_version: P12H-v1
+
+
+
+## 一、唯一有效规约
+
+
+
+本 Task 同时取代：
+
+
+
+\* `tasks/P12F_comet_vlm_golden_pilot.md`
+
+\* `tasks/P12G_zhipu_glm46v_calibration.md`
+
+
+
+上述旧 Task 不再作为本次执行依赖。
+
+
+
+如果旧文件为空、扩展名错误、不存在或内容冲突，不得阻断本任务，也不得补写或伪造旧文件。
+
+
+
+本次唯一有效规约：
+
+
+
+`tasks/P12H_comet_reference_zhipu_glm46v_calibration.md`
+
+
+
+冲突处理原则：
+
+
+
+1\. VLM Provider 以智谱为准，不使用 Gemini；
+
+2\. VLM Model 固定为 `glm-4.6v`；
+
+3\. Comet 只允许在活动仓库外浅克隆和只读审计；
+
+4\. 本轮只批准最多 3 个样本的 Calibration；
+
+5\. Calibration 通过后仍必须停在 Owner Gate；
+
+6\. 不得自动执行完整 Golden Pilot。
+
+
+
+\---
+
+
+
+## 二、项目路径
+
+
+
+活动仓库：
+
+
+
+`C:\\Users\\43871\\AppData\\Local\\LFZ_CODE\\agent-video-lab-233-laptop`
+
+
+
+工作目录：
+
+
+
+`C:\\Users\\43871\\AppData\\Local\\LFZ_CODE\\agent-video-lab-233-laptop\\03_tk_video_agent`
+
+
+
+任务文件：
+
+
+
+`C:\\Users\\43871\\AppData\\Local\\LFZ_CODE\\agent-video-lab-233-laptop\\03_tk_video_agent\\tasks\\P12H_comet_reference_zhipu_glm46v_calibration.md`
+
+
+
+Comet 外部参考目录：
+
+
+
+`C:\\Users\\43871\\AppData\\Local\\LFZ_CODE\\external_references\\comet`
+
+
+
+Comet 来源：
+
+
+
+`https://github.com/rpamis/comet`
+
+
+
+产品：
+
+
+
+`dog_stairs_v1`
+
+
+
+SKU：
+
+
+
+`khaki`
+
+
+
+素材批次：
+
+
+
+`batch_20260617_001`
+
+
+
+现有 VLM 检查点：
+
+
+
+`P12E_EXTERNAL_VLM_ENABLE_batch_20260617_001`
+
+
+
+\---
+
+
+
+## 三、本次目标
+
+
+
+本任务包含两个相互隔离的动作。
+
+
+
+### 动作一：Comet 参考审计
+
+
+
+\* 在活动仓库之外浅克隆 Comet；
+
+\* 只读分析其状态恢复、Phase Guard、上下文压缩、任务交接和验证证据机制；
+
+\* 不安装；
+
+\* 不初始化；
+
+\* 不接入当前项目；
+
+\* 不复制其代码。
+
+
+
+### 动作二：智谱 GLM-4.6V Calibration
+
+
+
+\* 将 P12E 的 VLM Provider 切换为智谱开放平台；
+
+\* 使用完整视觉模型 `glm-4.6v`；
+
+\* 复用现有两级 VLM、缓存、预算、Schema 和 Owner Firewall；
+
+\* 最多运行 3 个代表性 Calibration 样本；
+
+\* 验证图片、低帧率视频代理、结构化标签、缓存和费用链路；
+
+\* 完成后停在新的 Owner Gate。
+
+
+
+本任务不得生成新视频。
+
+
+
+\---
+
+
+
+## 四、Owner 正式授权
+
+
+
+Owner 已明确决定：
+
+
+
+\* Provider：智谱开放平台；
+
+\* Model：`glm-4.6v`；
+
+\* 当前授权：最多 3 个代表性样本的真实 Calibration；
+
+\* 允许上传低分辨率关键帧条带；
+
+\* 允许上传一个必要的低帧率短视频代理；
+
+\* 禁止上传完整原片；
+
+\* 禁止上传原片音频；
+
+\* 禁止上传高分辨率母文件；
+
+\* 禁止运行完整 Golden Pilot；
+
+\* 禁止生成 three-stage 试片；
+
+\* 禁止继续 P12D 剩余 9 条；
+
+\* 禁止自动发布。
+
+
+
+不得自行替换为：
+
+
+
+\* `glm-4.6v-flash`
+
+\* `glm-4.6v-flashx`
+
+\* 其他 GLM 模型
+
+\* Gemini
+
+\* 其他 Provider
+
+
+
+如果当前账号无法调用 `glm-4.6v`，必须创建 Owner Gate，不得自动换模型。
+
+
+
+\---
+
+
+
+## 五、全局安全红线
+
+
+
+必须继续遵守：
+
+
+
+\* `raw_videos` 永不删除；
+
+\* `raw_videos` 永不移动；
+
+\* `raw_videos` 永不改名；
+
+\* `raw_videos` 永不覆盖；
+
+\* `raw_videos` 不写入缓存、sidecar 或缩略图；
+
+\* 所有关键帧、代理、缓存、标签和报告写入 Git ignored 的 `outputs`；
+
+\* 媒体不得进入 Git；
+
+\* API Key 不得进入 Git；
+
+\* 禁止 `git add .`；
+
+\* 禁止 force push；
+
+\* 禁止 `git reset --hard`；
+
+\* 禁止 history rewrite；
+
+\* 禁止自动发布；
+
+\* 禁止调用旧自由 Timeline Planner；
+
+\* 禁止修改旧 P12D 负面样本；
+
+\* 禁止修改 Owner Firewall；
+
+\* 禁止修改 `agent_state` 主权；
+
+\* 面向 Owner 的输出全部使用简体中文。
+
+
+
+\---
+
+
+
+## 六、Comet 外部只读审计
+
+
+
+### 6.1 允许的操作
+
+
+
+在活动仓库之外执行浅克隆：
+
+
+
+```powershell
+
+git clone --depth 1 https://github.com/rpamis/comet "C:\\Users\\43871\\AppData\\Local\\LFZ_CODE\\external_references\\comet"
+
+```
+
+
+
+如果目标目录已经存在：
+
+
+
+\* 不得覆盖；
+
+\* 不得删除；
+
+\* 不得 reset；
+
+\* 读取 remote、branch、commit；
+
+\* 输出当前状态；
+
+\* 如需更新，在 Codex 界面给出方案，但不得自行更新。
+
+
+
+网络克隆失败不得阻断智谱 Calibration 主任务。
+
+
+
+### 6.2 禁止的操作
+
+
+
+禁止执行：
+
+
+
+\* `npm install`
+
+\* `npm install -g @rpamis/comet`
+
+\* `comet init`
+
+\* `npx skills add rpamis/comet`
+
+\* 创建 `.comet.yaml`
+
+\* 创建 `.openspec.yaml`
+
+\* 复制 Comet Skills 到当前项目
+
+\* 修改当前 `AGENTS.md` 以服从 Comet
+
+\* 新建第二套状态机
+
+\* 修改 Owner Firewall
+
+\* 修改现有 Phase Guard 主权
+
+\* 修改 `agent_state`
+
+\* 把 Comet 作为 Git submodule
+
+\* 把 Comet 代码复制进 `helpers`
+
+\* 将 Comet 文件提交进活动仓库
+
+
+
+### 6.3 只读审计范围
+
+
+
+优先阅读：
+
+
+
+\* `README.md`
+
+\* `README-zh.md`
+
+\* `AGENTS.md`
+
+\* `package.json`
+
+\* 核心 guard
+
+\* state 管理
+
+\* handoff
+
+\* context compression
+
+\* verification evidence
+
+
+
+最多提炼 5 项工程模式：
+
+
+
+\* 状态恢复；
+
+\* Phase Guard；
+
+\* 上下文压缩；
+
+\* 任务交接；
+
+\* 验证证据。
+
+
+
+生成：
+
+
+
+`comet_reference_audit.md`
+
+
+
+报告必须分为：
+
+
+
+1\. 可以借鉴；
+
+2\. 当前项目已经拥有；
+
+3\. 当前不应接入；
+
+4\. 未来满足什么条件才重新评估；
+
+5\. 明确结论：本轮未安装、未初始化、未移植。
+
+
+
+\---
+
+
+
+## 七、复用现有 VLM 架构
+
+
+
+优先复用或扩展：
+
+
+
+\* `helpers/vlm_qc_gate.py`
+
+\* 现有 Provider 抽象
+
+\* 现有两级 VLM Schema
+
+\* 现有缓存系统
+
+\* 现有预算系统
+
+\* 现有 Retry 和 Timeout
+
+\* 现有 Owner Firewall
+
+\* `agent_state`
+
+\* P12E 候选窗口
+
+\* 关键帧条带
+
+\* 低帧率短视频代理
+
+\* `automated_asset_ledger` 数据结构
+
+
+
+禁止建立第二套重复的：
+
+
+
+\* Provider 框架；
+
+\* API Key 系统；
+
+&#x20; -缓存系统；
+
+&#x20; -预算系统；
+
+\* Retry 系统；
+
+\* Owner Gate；
+
+\* 标签 Schema；
+
+\* 状态主权。
+
+
+
+允许新增一个最小智谱 Provider Adapter，但必须挂接到现有 Provider 抽象。
+
+
+
+\---
+
+
+
+## 八、智谱 Provider 配置
+
+
+
+目标配置：
+
+
+
+```text
+
+provider = zhipu
+
+model = glm-4.6v
+
+base_url = https://open.bigmodel.cn/api/paas/v4/
+
+upload_audio = false
+
+cache_enabled = true
+
+request_timeout_sec = 180
+
+max_retry_per_request = 1
+
+max_successful_calibration_calls = 3
+
+max_total_request_attempts = 6
+
+stream = false
+
+do_sample = false
+
+thinking.type = disabled
+
+```
+
+
+
+如果接口不接受某个参数：
+
+
+
+1\. 记录原始 API 错误；
+
+2\. 根据实际接口能力删除不兼容参数；
+
+3\. 不得修改模型；
+
+4\. 不得扩大调用范围；
+
+5\. 在报告中记录最终实际参数。
+
+
+
+禁止开启高随机度来掩盖结构化输出不稳定。
+
+
+
+\---
+
+
+
+## 九、SDK 与客户端
+
+
+
+优先检查当前项目是否已有兼容智谱 Provider。
+
+
+
+如果没有，优先使用官方 SDK：
+
+
+
+`zai-sdk`
+
+
+
+安装前检查：
+
+
+
+\* 当前 Python 版本；
+
+\* `zai-sdk` 是否已安装；
+
+\* 已安装版本；
+
+\* 是否存在旧 `zhipuai` SDK；
+
+\* 是否已有 OpenAI-compatible Client。
+
+
+
+目标是只保留一条实际生产调用路径。
+
+
+
+不得让两个智谱 SDK 同时进入正式 Provider 路径。
+
+
+
+如需安装：
+
+
+
+```powershell
+
+pip install zai-sdk
+
+```
+
+
+
+安装后记录实际版本。
+
+
+
+优先客户端：
+
+
+
+```python
+
+from zai import ZhipuAiClient
+
+```
+
+
+
+使用国内通用 API 端点：
+
+
+
+`https://open.bigmodel.cn/api/paas/v4/`
+
+
+
+不得误用 Coding 专属端点。
+
+
+
+\---
+
+
+
+## 十、API Key 安全
+
+
+
+正式环境变量：
+
+
+
+`ZAI_API_KEY`
+
+
+
+兼容只读检查：
+
+
+
+`ZHIPUAI_API_KEY`
+
+
+
+读取优先级：
+
+
+
+1\. `ZAI_API_KEY`
+
+2\. `ZHIPUAI_API_KEY`
+
+
+
+规则：
+
+
+
+\* 不得把 Key 写入源码；
+
+\* 不得写入 Task；
+
+\* 不得写入日志；
+
+\* 不得写入 JSON 报告；
+
+\* 不得进入 Git；
+
+\* 不得在 Codex 界面回显完整 Key；
+
+\* 不得要求 Owner 把 Key 粘贴进 Codex 对话。
+
+
+
+如果两个环境变量都不存在：
+
+
+
+立即停止真实 API 调用。
+
+
+
+Codex 必须在界面输出安全设置步骤。
+
+
+
+当前 PowerShell 会话示例：
+
+
+
+```powershell
+
+$env:ZAI_API_KEY = "在本机填写，不要发送到对话中"
+
+```
+
+
+
+Windows 用户环境变量示例：
+
+
+
+```powershell
+
+\[Environment]::SetEnvironmentVariable(
+
+&#x20;   "ZAI_API_KEY",
+
+&#x20;   "在本机填写，不要发送到对话中",
+
+&#x20;   "User"
+
+)
+
+```
+
+
+
+验证时只能输出：
+
+
+
+\* 是否存在；
+
+\* 字符长度；
+
+\* 脱敏后的少量前后字符。
+
+
+
+\---
+
+
+
+## 十一、模型能力探测
+
+
+
+真实 Calibration 前必须验证：
+
+
+
+1\. 当前账号能够调用 `glm-4.6v`；
+
+2\. API 端点正确；
+
+3\. 图片输入可用；
+
+4\. 低帧率短视频代理输入方式可用；
+
+5\. 至少一种媒体传输方式可用；
+
+6\. `usage` 字段是否返回；
+
+7\. 输入 Token 是否可记录；
+
+8\. 输出 Token 是否可记录；
+
+9\. 视觉或视频 Token 是否可记录；
+
+10\. `thinking.type = disabled` 是否可用；
+
+11\. `do_sample = false` 是否可用；
+
+12\. Function Call 是否支持多模态请求；
+
+13\. JSON-only 输出是否稳定；
+
+14\. 401、400、429、500 错误是否正确分类；
+
+15\. Retry 是否会产生重复业务调用；
+
+16\. 缓存命中是否可以阻止再次请求。
+
+
+
+能力探测也计入最多 6 次总请求尝试。
+
+
+
+能力探测不得使用完整原片。
+
+
+
+\---
+
+
+
+## 十二、资源包与费用硬门禁
+
+
+
+不得根据宣传截图默认资源包一定覆盖真实 API 调用。
+
+
+
+真实 Calibration 前必须尽可能确认：
+
+
+
+\* `resource_pack_name`
+
+\* `supported_models`
+
+\* `glm_4_6v_included`
+
+\* `api_calls_included`
+
+\* `image_tokens_included`
+
+\* `video_tokens_included`
+
+\* `input_tokens_included`
+
+\* `output_tokens_included`
+
+\* `package_expiration`
+
+\* `package_tokens_before`
+
+\* `concurrency_limit`
+
+\* `qps_limit`
+
+\* `package_overage_behavior`
+
+\* `cash_charge_possible`
+
+
+
+无法确认的项目标记为：
+
+
+
+`unknown_owner_console_check_required`
+
+
+
+出现以下任一情况时不得执行真实 Calibration：
+
+
+
+\* 无法确认 `glm-4.6v` 被资源包覆盖；
+
+\* 无法确认图片 Token 是否抵扣；
+
+\* 无法确认视频 Token 是否抵扣；
+
+\* 可能产生未经授权的现金扣费；
+
+\* 无法阻断套餐外超额扣费；
+
+\* 资源包余额不足；
+
+\* API Key 无权调用该模型。
+
+
+
+必须创建：
+
+
+
+`GATE_ZHIPU_PACKAGE_CONFIRMATION`
+
+
+
+并在 Codex 界面明确告诉 Owner 需要在控制台确认哪些项目。
+
+
+
+\---
+
+
+
+## 十三、Calibration 样本
+
+
+
+不得直接运行完整 Golden Pilot。
+
+
+
+最多处理 3 个代表性样本。
+
+
+
+### 样本 1：静态产品关键帧条带
+
+
+
+验证：
+
+
+
+\* `product_present`
+
+\* `product_state`
+
+\* `product_visibility`
+
+\* `shot_scale`
+
+\* `room_or_scene`
+
+\* `segment_role_candidates`
+
+
+
+### 样本 2：狗实际使用关键帧条带
+
+
+
+验证：
+
+
+
+\* `dog_present`
+
+\* `dog_identity`
+
+\* `dog_motion_direction`
+
+\* `primary_action`
+
+\* `product_present`
+
+\* `usage` 或 `outcome` 候选资格
+
+\* `confidence`
+
+
+
+### 样本 3：低帧率动作短视频代理
+
+
+
+验证：
+
+
+
+\* `action_start`
+
+\* `action_end`
+
+\* `action_completeness`
+
+\* `dog_motion_direction`
+
+\* `product_state_change`
+
+\* `demonstration`
+
+\* `outcome`
+
+\* `proof` 候选资格
+
+
+
+硬限制：
+
+
+
+\* 最多 3 次成功业务调用；
+
+\* 最多 6 次总请求尝试；
+
+\* 单请求最多 Retry 1 次；
+
+\* 不上传完整原片；
+
+\* 不上传原片音频；
+
+\* 不上传高分辨率母文件；
+
+\* 不处理 Golden Pilot 之外素材；
+
+\* 不为凑满 3 次调用无意义样本；
+
+\* 不运行完整 Pass 1；
+
+\* 不运行完整 Pass 2。
+
+
+
+\---
+
+
+
+## 十四、结构化输出策略
+
+
+
+优先级：
+
+
+
+1\. 实测多模态 Function Call；
+
+2\. 如果可用，使用单一标签函数和严格参数 Schema；
+
+3\. 如果不可用，使用 JSON-only Prompt；
+
+4\. 使用现有 Schema Validator 或 Pydantic 本地校验；
+
+5\. Schema 失败只允许一次修复请求；
+
+6\. 第二次仍失败则该样本失败。
+
+
+
+禁止：
+
+
+
+\* 用正则静默补齐字段；
+
+\* 缺字段时自动填默认值并标记 Pass；
+
+\* Mock 结果冒充真实标签；
+
+\* 非法 JSON 进入正式资产账本；
+
+\* VLM 直接生成 Timeline；
+
+\* VLM 修改三段式脚本；
+
+\* VLM 决定发布。
+
+
+
+必须保留 P12E 标签字段：
+
+
+
+\* `clip_id`
+
+\* `start_ms`
+
+\* `end_ms`
+
+\* `primary_action`
+
+\* `secondary_action`
+
+\* `dog_present`
+
+\* `dog_identity`
+
+\* `dog_motion_direction`
+
+\* `product_present`
+
+\* `product_state`
+
+\* `product_visibility`
+
+\* `shot_scale`
+
+\* `camera_motion`
+
+\* `room_or_scene`
+
+\* `action_completeness`
+
+\* `safe_vertical_crop`
+
+\* `hook_strength`
+
+\* `emotional_tone`
+
+\* `segment_role_candidates`
+
+\* `claim_evidence_candidates`
+
+\* `continuity_keys`
+
+\* `quality_risks`
+
+\* `requires_video_review`
+
+\* `confidence`
+
+\* `provider`
+
+\* `model`
+
+\* `schema_version`
+
+
+
+\---
+
+
+
+## 十五、缓存与幂等
+
+
+
+缓存键至少包含：
+
+
+
+\* `asset_hash`
+
+\* `window_start_ms`
+
+\* `window_end_ms`
+
+\* `prompt_schema_version`
+
+\* `provider`
+
+\* `model`
+
+\* `media_resolution`
+
+\* `proxy_version`
+
+
+
+同一成功缓存键：
+
+
+
+\* 不得再次上传；
+
+\* 不得再次调用；
+
+\* 不得再次扣费；
+
+\* 不得因 Pipeline Resume 重复执行。
+
+
+
+缓存必须原子写入：
+
+
+
+1\. 写临时文件；
+
+2\. flush；
+
+3\. fsync；
+
+4\. `os.replace`。
+
+
+
+禁止多个模块同时写同一缓存文件。
+
+
+
+缓存测试不得为了验证缓存而再次产生真实收费调用。
+
+
+
+\---
+
+
+
+## 十六、Calibration 通过标准
+
+
+
+整体通过条件：
+
+
+
+1\. `glm-4.6v` 真实可调用；
+
+2\. 图片输入成功；
+
+3\. 低帧率短视频代理输入成功，或明确证明接口不支持；
+
+4\. 结果可以解析；
+
+5\. Schema 校验成功；
+
+6\. `clip_id` 和时间范围正确；
+
+7\. 产品状态识别合理；
+
+8\. 狗和使用动作识别合理；
+
+9\. 动作完整性能够判断，或明确返回低置信度；
+
+10\. `segment_role_candidates` 合法；
+
+11\. `claim_evidence_candidates` 可使用；
+
+12\. usage 数据能够记录；
+
+13\. Token 或资源包扣减能够记录；
+
+14\. 缓存命中不会重复调用；
+
+15\. 未上传未授权数据；
+
+16\. 未产生未经授权的现金费用。
+
+
+
+如果视频代理输入不被接受：
+
+
+
+\* 不得改为上传完整原片；
+
+\* 不得改为上传原片音频；
+
+\* 必须创建 Owner Gate。
+
+
+
+Calibration 失败时不得运行完整 Golden Pilot。
+
+
+
+\---
+
+
+
+## 十七、输出报告
+
+
+
+所有文件写入 Git ignored 的 `outputs`。
+
+
+
+至少生成：
+
+
+
+\* `comet_reference_audit.md`
+
+\* `zhipu_provider_capability_report.json`
+
+\* `zhipu_package_compatibility_report.json`
+
+\* `zhipu_calibration_requests.json`
+
+\* `zhipu_calibration_results.json`
+
+\* `zhipu_schema_validation_report.json`
+
+\* `zhipu_token_cost_report.json`
+
+\* `zhipu_cache_report.json`
+
+\* `zhipu_calibration_review.md`
+
+
+
+报告不得包含：
+
+
+
+\* 完整 API Key；
+
+\* 完整原片；
+
+\* 原始音频；
+
+\* 未脱敏敏感数据。
+
+
+
+\---
+
+
+
+## 十八、Calibration 后 Owner Gate
+
+
+
+创建：
+
+
+
+`checkpoint_id = P12H_ZHIPU_GLM46V_CALIBRATION_REVIEW_batch_20260617_001`
+
+
+
+`checkpoint_type = GATE_ZHIPU_GLM46V_CALIBRATION_REVIEW`
+
+
+
+设置：
+
+
+
+```text
+
+awaiting_owner_review = true
+
+pipeline_status = BLOCKED_BY_OWNER_GATE
+
+```
+
+
+
+Codex 必须在界面使用简体中文输出：
+
+
+
+```text
+
+OWNER_REVIEW_REQUIRED
+
+
+
+检查点编号：
+
+实际Provider：
+
+实际Model：
+
+API端点：
+
+SDK名称和版本：
+
+API Key状态：
+
+Comet克隆结果：
+
+Comet参考审计结果：
+
+Comet是否被安装或接入：否
+
+资源包名称：
+
+资源包有效期：
+
+资源包是否覆盖glm-4.6v：
+
+图片Token是否覆盖：
+
+视频Token是否覆盖：
+
+套餐外现金扣费风险：
+
+Calibration样本数量：
+
+图片调用成功/失败：
+
+视频调用成功/失败：
+
+Function Call可用性：
+
+最终结构化输出策略：
+
+Schema成功率：
+
+产品状态识别结果：
+
+狗使用动作识别结果：
+
+动作完整性判断结果：
+
+脚本角色判断结果：
+
+缓存测试结果：
+
+输入Token：
+
+输出Token：
+
+视觉Token：
+
+视频Token：
+
+资源包扣减：
+
+现金费用：
+
+平均请求延迟：
+
+失败和重试次数：
+
+主要问题：
+
+报告路径：
+
+
+
+请选择：
+
+
+
+A. Calibration通过，批准glm-4.6v运行完整Golden Pilot标签
+
+B. 只批准glm-4.6v运行Pass 1关键帧标签
+
+C. 修订Prompt或Schema后重新Calibration
+
+D. 修改视频代理输入方式后重新Calibration
+
+E. 停止智谱VLM方向
+
+```
+
+
+
+Codex 必须提供推荐方案及理由。
+
+
+
+Owner 未明确选择前：
+
+
+
+\* 不得运行完整 Golden Pilot；
+
+\* 不得生成 `three_stage_plan`；
+
+\* 不得生成新视频；
+
+\* 不得调用额外 VLM；
+
+\* 不得继续剩余 9 条；
+
+\* 不得发布。
+
+
+
+\---
+
+
+
+## 十九、测试与 Git
+
+
+
+如果修改源码，依次执行：
+
+
+
+1\. P12H focused tests；
+
+2\. P12E VLM 和三段式编译器回归；
+
+3\. P12B/P12C/P12D 安全回归；
+
+4\. 9:16 Guard 回归；
+
+5\. Owner Firewall 回归；
+
+6\. 全量 unittest；
+
+7\. Git Safety。
+
+
+
+只允许选择性提交：
+
+
+
+\* 源码；
+
+\* 测试；
+
+\* 必要配置模板；
+
+\* 必要 README 或 AGENTS.md 修改。
+
+
+
+禁止提交：
+
+
+
+\* Comet 外部目录；
+
+\* 关键帧；
+
+\* 视频代理；
+
+\* VLM 缓存；
+
+\* VLM真实响应；
+
+\* 媒体；
+
+\* API Key；
+
+\* `.env`；
+
+\* 输出报告中的敏感内容。
+
+
+
+允许安全 push 到 `origin/main`。
+
+
+
+\---
+
+
+
+## 二十、Codex 请示规则
+
+
+
+普通安全问题由 Codex 自主处理。
+
+
+
+必须请示 Owner 时，Codex 界面必须包含：
+
+
+
+1\. 当前问题；
+
+2\. 已完成工作；
+
+3\. 为什么必须请示；
+
+4\. 2–5 个可执行方案；
+
+5\. 每个方案的动作、收益、成本、风险和预计耗时；
+
+6\. Codex 推荐；
+
+7\. Owner 可以直接回复的选项。
+
+
+
+禁止只输出：
+
+
+
+`是否继续`
+
+
+
+所有面向 Owner 的内容必须使用简体中文。
+
+
+
+\---
+
+
+
+## 二十一、执行顺序
+
+
+
+现在执行：
+
+
+
+1\. 完整读取本 Task；
+
+2\. 确认 `spec_version = P12H-v1`；
+
+3\. 验证文件首尾完整；
+
+4\. 检查仓库和 `agent_state`；
+
+5\. 将旧 P12F/P12G 标记为已被本规约替代；
+
+6\. 在活动仓库外浅克隆 Comet；
+
+7\. 只读审计 Comet；
+
+8\. 检查现有 VLM Provider 抽象；
+
+9\. 接入最小智谱 `glm-4.6v` Adapter；
+
+10\. 检查或安装 `zai-sdk`；
+
+11\. 检查 `ZAI_API_KEY` 或兼容变量；
+
+12\. 查询 `glm-4.6v` 调用能力；
+
+13\. 确认资源包和现金扣费风险；
+
+14\. 重新计算 Calibration 预算；
+
+15\. 执行最多 3 个代表性 Calibration 样本；
+
+16\. 验证 Schema、缓存和幂等；
+
+17\. 生成 Comet 和智谱报告；
+
+18\. 运行测试与 Git Safety；
+
+19\. 如有源码修改，选择性 commit 并安全 push；
+
+20\. 创建 P12H Calibration Owner Gate；
+
+21\. 输出中文方案菜单；
+
+22\. 停止等待 Owner。
+
+
+
+本任务不得直接运行完整 Golden Pilot。
+
+
+
+本任务不得生成新视频。
+
+
+
+本任务不得安装或接入 Comet。
+
+
+
+

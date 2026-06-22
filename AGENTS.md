@@ -118,3 +118,15 @@ The US market output contract is mandatory: `market=US`, `script_language=en-US`
 Asset semantic indexing may create deterministic candidate windows, keyframe strip plans, and on-demand short proxy plans only under ignored outputs. It must never write sidecars, thumbnails, caches, or cuts into `raw_videos`.
 
 Real VLM semantic labeling requires `GATE_EXTERNAL_PROVIDER_ENABLE` before any media upload, API test, API key use, or paid call. VLM may describe, classify, and score assets, but it must not generate final timelines, publish, modify media, weaken hard rules, or override Owner decisions.
+
+## VIDEO_TRANSITION_ZERO_FREEZE_INVARIANT
+
+Any non-designed freeze immediately before a video transition is a hard failure and must be classified before a final video is accepted.
+
+`PIPELINE_INTRODUCED_FREEZE` means the render pipeline created the freeze through last-frame copying, PTS gaps, repeated CFR normalization, an overlong visual slot, an invalid L-Cut, concat timestamp gaps, final mux duration mismatch, or equivalent behavior. This is always a Hard Failure. A video containing it must not enter a final delivery directory or be reported as complete.
+
+`SOURCE_NATURAL_STATIC` means the source footage itself is already static in the corresponding window. It must not be automatically misclassified as a render failure, but it still requires rhythm and pacing review before acceptance.
+
+`INTENTIONAL_HOLD` is allowed only for clearly marked Hero, Detail, or Closure shots. The slate must contain `intentional_hold = true`, `hold_reason`, `hold_duration_ms`, and `editorial_role`. It must never be used for dynamic action, ordinary transitions, L-Cut padding, or filling an overlong visual slot.
+
+The pipeline must never use `tpad=stop_mode=clone`, frame loops, last-frame image loops, or equivalent clone padding for ordinary video. Ordinary segments must not be extended by copying the final frame. All concat inputs must start at PTS 0, and final outputs must use a single CFR normalization strategy. VLM approval cannot override a local physical frame-detection failure. Every final video must pass transition freeze detection before delivery readiness.

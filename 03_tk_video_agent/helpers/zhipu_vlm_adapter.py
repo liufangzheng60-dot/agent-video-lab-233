@@ -43,15 +43,11 @@ class ZhipuCalibrationConfig:
 
 
 def inspect_zhipu_environment() -> dict[str, Any]:
-    zai_key = os.environ.get("ZAI_API_KEY") or ""
-    compat_key = os.environ.get("ZHIPUAI_API_KEY") or ""
-    selected_name = "ZAI_API_KEY" if zai_key else ("ZHIPUAI_API_KEY" if compat_key else None)
-    selected_value = zai_key or compat_key
+    selected_value = os.environ.get("ZHIPU_API_KEY") or ""
     return {
         "python_key_status": {
-            "ZAI_API_KEY": _key_status(zai_key),
-            "ZHIPUAI_API_KEY": _key_status(compat_key),
-            "selected_env_var": selected_name,
+            "ZHIPU_API_KEY": _key_status(selected_value),
+            "selected_env_var": "ZHIPU_API_KEY" if selected_value else None,
         },
         "sdk_status": inspect_zai_sdk(),
         "legacy_zhipuai_status": inspect_legacy_zhipuai(),
@@ -174,7 +170,7 @@ def write_blocked_calibration_reports(output_dir: Path | str, *, env_report: dic
         "sdk": env_report["sdk_status"],
         "api_key_status": env_report["python_key_status"],
         "real_api_called": False,
-        "blockers": [] if env_report["api_key_available"] else ["ZAI_API_KEY 和 ZHIPUAI_API_KEY 均不存在，已停止真实 API 调用。"],
+        "blockers": [] if env_report["api_key_available"] else ["ZHIPU_API_KEY 不存在，已停止真实 API 调用。"],
         "created_at": utc_now_iso(),
     }
     results = {
@@ -242,5 +238,5 @@ def _review_markdown(env_report: dict[str, Any], package_report: dict[str, Any],
     for blocker in package_report["blockers"]:
         lines.append(f"- {blocker}")
     if not env_report["api_key_available"]:
-        lines.append("- 本机当前会话未设置 ZAI_API_KEY 或 ZHIPUAI_API_KEY。")
+        lines.append("- 本机当前会话未设置 ZHIPU_API_KEY。")
     return "\n".join(lines) + "\n"

@@ -1,0 +1,35 @@
+{
+  "spec_version": "P12W-v1",
+  "opencv": {
+    "sample_fps": 2.0,
+    "backend_required": true
+  },
+  "motion_match": {
+    "default_weight": 0.03,
+    "max_weight": 0.05
+  },
+  "dominance": {
+    "dominance_margin_min": 6,
+    "max_replacements_per_video": 2
+  },
+  "vlm": {
+    "provider": "zhipu",
+    "model": "glm-4.6v",
+    "hard_ceiling_tokens": 3000000
+  },
+  "ffmpeg": {
+    "single_cfr": "fps=30 in segment standardization only",
+    "forbidden": [
+      "tpad=stop_mode=clone",
+      "-shortest duration planning",
+      "double CFR"
+    ]
+  },
+  "thresholds": {
+    "blur_soft_floor": 489.7403,
+    "motion_spike_soft_floor": 31.4318,
+    "abab_any_range_reject": true,
+    "glitch_any_range_reject": true
+  },
+  "asset_exclusion_intervals_path": "configs/asset_exclusion_intervals_v2.json"
+}

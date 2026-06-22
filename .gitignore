@@ -46,6 +46,7 @@ Thumbs.db
 *.jpeg
 *.webp
 *.gif
+synthetic_smoke/
 
 # Product media and generated outputs must stay out of Git.
 products/*/inputs/raw_videos/
@@ -68,3 +69,8 @@ products/**/outputs/
 05_final_outputs/**
 !05_final_outputs/**/
 !05_final_outputs/**/.gitkeep
+*.pyc
+products/**/inputs/raw_videos/
+products/**/caches/
+temp/
+scratch/

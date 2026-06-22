@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -444,7 +445,7 @@ def run_p12h_zhipu_calibration_preflight(repo_root: Path | str, product: str, sk
         "media_uploaded": False,
         "report_paths": report_paths | {"comet_reference_audit": comet_audit["report_path"]},
         "why_owner_approval_is_mandatory": "当前无法从本地确认资源包覆盖和现金扣费风险，且 API Key 未在会话中设置；不得执行真实 Calibration。",
-        "codex_recommendation": "先在智谱控制台确认资源包覆盖 glm-4.6v、图片/视频 Token 抵扣和套餐外现金扣费关闭，再在本机环境变量设置 ZAI_API_KEY。",
+        "codex_recommendation": "先在智谱控制台确认资源包覆盖 glm-4.6v、图片/视频 Token 抵扣和套餐外现金扣费关闭，再在本机环境变量设置 ZHIPU_API_KEY。",
         "exact_resume_instruction": f"确认后重新运行 python main.py p12h-calibration --product {product} --sku {sku} --material-batch {material_batch}",
     }
     request_owner_review(state, checkpoint)
@@ -468,7 +469,7 @@ def run_p12h_zhipu_calibration_preflight(repo_root: Path | str, product: str, sk
 
 
 def build_comet_reference_audit(repo: Path, product: str, material_batch: str) -> dict[str, Any]:
-    comet_dir = Path(r"C:\Users\43871\AppData\Local\LFZ_CODE\external_references\comet")
+    comet_dir = Path(os.environ.get("COMET_REFERENCE_DIR", repo.parent / "external_references" / "comet")).resolve()
     out_dir = agent_output_dir(repo, product, material_batch) / "p12h_zhipu_glm46v_calibration"
     out_dir.mkdir(parents=True, exist_ok=True)
     report_path = out_dir / "comet_reference_audit.md"

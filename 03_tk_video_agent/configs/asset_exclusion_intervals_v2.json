@@ -1,0 +1,20 @@
+{
+  "spec_version": "P12Y-v1",
+  "managed_by": "helpers/vision_compiler/tiktok_production_batch.py",
+  "intervals": [
+    {
+      "source_video_id": "IMG_0461",
+      "source_in_ms": 4200,
+      "source_out_ms": 6466.667,
+      "final_timeline_interval": {
+        "variant_id": "V2A_feature_proof_P12Xv2",
+        "start_ms": 15800,
+        "end_ms": 18066.667
+      },
+      "reason": "owner_confirmed_hand_intrusion",
+      "severity": "fatal",
+      "owner_confirmed": true,
+      "evidence_source": "P12Y_trace_from_P12X_v2_V2A_closure"
+    }
+  ]
+}

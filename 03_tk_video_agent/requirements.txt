@@ -4,3 +4,5 @@ pytest
 PyYAML
 edge-tts
 zai-sdk
+opencv-python-headless
+numpy

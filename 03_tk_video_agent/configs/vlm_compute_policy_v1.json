@@ -1,0 +1,27 @@
+{
+  "spec_version": "P12T-v1",
+  "provider": "zhipu",
+  "model": "glm-4.6v",
+  "per_six_video_budget_tokens": {
+    "soft": 250000,
+    "quality_escalation": 500000,
+    "hard_ceiling": 800000
+  },
+  "allocation": {
+    "asset_semantic_visual_hygiene": 0.2,
+    "action_video_understanding": 0.25,
+    "storyboard_comparison": 0.25,
+    "final_full_cut_review": 0.25,
+    "retry_reserve": 0.05
+  },
+  "stop_rules": [
+    "hard_ceiling_reached",
+    "successful_same_input_cache_exists",
+    "same_defect_same_recommendation_twice",
+    "vlm_advice_does_not_change_timeline",
+    "local_physical_error_unfixed",
+    "request_failed_more_than_twice",
+    "low_confidence_without_new_evidence",
+    "final_cut_passed"
+  ]
+}

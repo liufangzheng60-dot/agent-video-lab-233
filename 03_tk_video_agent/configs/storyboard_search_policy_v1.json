@@ -1,0 +1,16 @@
+{
+  "spec_version": "P12U-v1",
+  "beam_width": 30,
+  "complete_storyboards_keep": 20,
+  "final_variants_keep": 6,
+  "edge_score": {
+    "motion_continuity_weight": 0.12,
+    "motion_continuity_weight_ceiling": 0.15,
+    "low_confidence_motion_zero_below": 0.60
+  },
+  "candidate_families": [
+    "quality-first",
+    "continuity-first",
+    "motion-aware"
+  ]
+}

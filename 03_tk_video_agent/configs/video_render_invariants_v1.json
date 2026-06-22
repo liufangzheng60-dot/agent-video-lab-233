@@ -1,0 +1,29 @@
+{
+  "spec_version": "P12T-v1",
+  "fps": 30,
+  "frame_duration_ms": 33.3333333333,
+  "single_cfr_strategy": "segment_filtergraph_fps_only",
+  "forbidden_filters": [
+    "tpad=stop_mode=clone",
+    "loop",
+    "apad"
+  ],
+  "forbidden_output_cfr_overrides": [
+    "-r 30",
+    "-fps_mode cfr",
+    "-vsync cfr"
+  ],
+  "concat_input_requirements": {
+    "first_pts": 0,
+    "pts_monotonic": true,
+    "target_frames_exact": true,
+    "no_clone_padding": true
+  },
+  "transition_freeze_policy": {
+    "dynamic_exact_duplicate_max_frames": 2,
+    "pipeline_freeze_hard_reject_ms": 100,
+    "analysis_pre_transition_ms": 500,
+    "analysis_post_transition_ms": 200,
+    "source_comparison_ms": 500
+  }
+}

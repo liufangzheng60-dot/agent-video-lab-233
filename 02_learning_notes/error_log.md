@@ -58,3 +58,9 @@ git clone https://github.com/browser-use/video-use 00_references\video-use
 git clone https://github.com/2025Emma/vibe-coding-cn 00_references\vibe-coding-cn
 git clone https://github.com/browser-use/video-use 00_references\video-use
 ```
+
+## P12W input lessons
+
+- P12U motion-aware scoring over-weighted motion continuity; P12W caps Motion Match at 3% default and 5% maximum.
+- P12U ran without cv2; P12W requires opencv-python-headless and records opencv_backend_used=true.
+- P12U V1B/V2B style temporal artifacts require OpenCV ABAB, duplicate, direction-reversal and speed-artifact checks before any replacement.

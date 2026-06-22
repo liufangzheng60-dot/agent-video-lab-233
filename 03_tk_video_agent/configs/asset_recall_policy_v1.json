@@ -1,0 +1,17 @@
+{
+  "spec_version": "P12U-v1",
+  "raw_asset_count_expected": 52,
+  "local_indexing": {
+    "ffprobe": true,
+    "scene_split": "low_cost_single_scene_plus_motion_peaks",
+    "sparse_keyframes_per_scene": 7,
+    "contact_sheet_width": 360,
+    "contact_sheet_height": 640
+  },
+  "motion_descriptor": {
+    "head_tail_window_ms": [300, 500],
+    "full_asset_low_density": true,
+    "top_k_precise_only": true,
+    "cache_enabled": true
+  }
+}

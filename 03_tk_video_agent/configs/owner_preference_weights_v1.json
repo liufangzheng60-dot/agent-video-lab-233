@@ -1,0 +1,15 @@
+{
+  "spec_version": "P12U-v1",
+  "weights": {
+    "zero_transition_freeze": 1.0,
+    "no_hand_intrusion": 0.95,
+    "action_completion": 0.92,
+    "flow_over_forced_brevity": 0.88,
+    "semantic_evidence": 0.86,
+    "visual_hygiene": 0.84,
+    "home_lifestyle_feeling": 0.72,
+    "avoid_showroom_feel": 0.70,
+    "motion_continuity": 0.12
+  },
+  "hard_constraints_remain_absolute": true
+}
